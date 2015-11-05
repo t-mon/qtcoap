@@ -2,19 +2,19 @@
  *                                                                         *
  *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
  *                                                                         *
- *  This file is part of guh.                                              *
+ *  This file is part of QtCoap.                                           *
  *                                                                         *
- *  Guh is free software: you can redistribute it and/or modify            *
+ *  QtCoap is free software: you can redistribute it and/or modify         *
  *  it under the terms of the GNU General Public License as published by   *
- *  the Free Software Foundation, version 2 of the License.                *
+ *  the Free Software Foundation, version 3 of the License.                *
  *                                                                         *
- *  Guh is distributed in the hope that it will be useful,                 *
+ *  QtCoap is distributed in the hope that it will be useful,              *
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the           *
  *  GNU General Public License for more details.                           *
  *                                                                         *
  *  You should have received a copy of the GNU General Public License      *
- *  along with guh. If not, see <http://www.gnu.org/licenses/>.            *
+ *  along with QtCoap. If not, see <http://www.gnu.org/licenses/>.         *
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -28,25 +28,27 @@
 
 // PDU = Protocol Data Unit
 
-//         0                   1                   2                   3
-//       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-//      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//      |Ver| T |  TKL  |      Code     |          Message ID           |
-//      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//      |   Token (if any, TKL bytes) ...
-//      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//      |   Options (if any) ...
-//      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-//      |1 1 1 1 1 1 1 1|    Payload (if any) ...
-//      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-
-//  Version (Ver): 2-bit unsigned integer.  Indicates the CoAP version number.
-//  Type (T): 2-bit unsigned integer.  Indicates if this message is of
-//            type Confirmable (0), Non-confirmable (1), Acknowledgement (2), or Reset (3)
-//  Code: 8-bit unsigned integer, split into a 3-bit class (most
-//        significant bits) and a 5-bit detail (least significant bits)
-//  Message ID: 16-bit unsigned integer in network byte order.
-//  Token Length (TKL): 4-bit unsigned integer.
+/*         0                   1                   2                   3
+ *       0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+ *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *      |Ver| T |  TKL  |      Code     |          Message ID           |
+ *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *      |   Token (if any, TKL bytes) ...
+ *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *      |   Options (if any) ...
+ *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *      |1 1 1 1 1 1 1 1|    Payload (if any) ...
+ *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+ *
+ *  Version (Ver): 2-bit unsigned integer.  Indicates the CoAP version number.
+ *  Type (T): 2-bit unsigned integer.  Indicates if this message is of
+ *            type Confirmable (0), Non-confirmable (1), Acknowledgement (2), or Reset (3)
+ *  Code: 8-bit unsigned integer, split into a 3-bit class (most
+ *        significant bits) and a 5-bit detail (least significant bits)
+ *  Message ID: 16-bit unsigned integer in network byte order.
+ *  Token Length (TKL): 4-bit unsigned integer.
+ *
+ */
 
 class CoapPduBlock
 {
