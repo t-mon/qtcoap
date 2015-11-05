@@ -1,0 +1,76 @@
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *                                                                         *
+ *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *                                                                         *
+ *  This file is part of guh.                                              *
+ *                                                                         *
+ *  Guh is free software: you can redistribute it and/or modify            *
+ *  it under the terms of the GNU General Public License as published by   *
+ *  the Free Software Foundation, version 2 of the License.                *
+ *                                                                         *
+ *  Guh is distributed in the hope that it will be useful,                 *
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of         *
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the          *
+ *  GNU General Public License for more details.                           *
+ *                                                                         *
+ *  You should have received a copy of the GNU General Public License      *
+ *  along with guh. If not, see <http://www.gnu.org/licenses/>.            *
+ *                                                                         *
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+#ifndef COAP_H
+#define COAP_H
+
+#include <QObject>
+#include <QHostInfo>
+#include <QUdpSocket>
+#include <QHostAddress>
+
+#include "coaprequest.h"
+#include "coapreply.h"
+
+/* Information about CoAP
+ *
+ * The Constrained Application Protocol (CoAP)          : https://tools.ietf.org/html/rfc7252
+ * Constrained RESTful Environments (CoRE) Link Format  : http://tools.ietf.org/html/rfc6690
+ * Blockwise transfers in CoAP                          : https://tools.ietf.org/html/draft-ietf-core-block-15
+ * Observing Resources in CoAP                          : https://tools.ietf.org/html/draft-ietf-core-observe-16
+ */
+
+class Coap : public QObject
+{
+    Q_OBJECT
+
+public:
+    explicit Coap(QObject *parent = 0);
+
+    CoapReply *ping(const CoapRequest &request);
+    CoapReply *get(const CoapRequest &request);
+    CoapReply *put(const CoapRequest &request, const QByteArray &data = QByteArray());
+    CoapReply *post(const CoapRequest &request, const QByteArray &data = QByteArray());
+    CoapReply *deleteResource(const CoapRequest &request);
+
+private:
+    QUdpSocket *m_socket;
+    QHash<int, CoapReply *> m_runningHostLookups;
+
+    QHash<int, CoapReply *> m_repliesId;
+    QHash<QByteArray, CoapReply *> m_repliesToken;
+
+    void sendRequest(CoapReply *reply, const bool &lookedUp = false);
+    void sendData(const QHostAddress &hostAddress, const quint16 &port, const QByteArray &data);
+    void sendCoapPdu(const QHostAddress &hostAddress, const quint16 &port, const CoapPdu &pdu);
+
+    void processResponse(const CoapPdu &pdu);
+
+signals:
+    void replyFinished(CoapReply *reply);
+
+private slots:
+    void hostLookupFinished(const QHostInfo &hostInfo);
+    void onReadyRead();
+    void onReplyTimeout();
+    void onReplyFinished();
+};
+
+#endif // COAP_H
