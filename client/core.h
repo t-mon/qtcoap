@@ -39,8 +39,7 @@ public:
 private:
     Coap *m_coap;
 
-    void pingTest();
-    void helloTest();
+    QList<CoapReply *> m_replies;
 
 private slots:
     void onReplyFinished(CoapReply *reply);

@@ -128,7 +128,9 @@ public:
         NoError,
         InvalidToken,
         InvalidPduSize,
-
+        InvalidOptionDelta,
+        InvalidOptionLength,
+        UnknownOption
     };
 
     CoapPdu(QObject *parent = 0);

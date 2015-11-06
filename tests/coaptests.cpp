@@ -62,7 +62,7 @@ void CoapTests::invalidScheme()
     QCOMPARE(reply->error(), CoapReply::InvalidUrlSchemeError);
 }
 
-void CoapTests::pingTest()
+void CoapTests::ping()
 {
     CoapRequest request(QUrl("coap://coap.me/"));
     qDebug() << request.url().toString();
@@ -79,7 +79,7 @@ void CoapTests::pingTest()
     reply->deleteLater();
 }
 
-void CoapTests::helloTest()
+void CoapTests::hello()
 {
     CoapRequest request(QUrl("coap://coap.me/hello"));
     qDebug() << request.url().toString();
@@ -97,7 +97,7 @@ void CoapTests::helloTest()
     reply->deleteLater();
 }
 
-void CoapTests::brokenTest()
+void CoapTests::broken()
 {
     CoapRequest request(QUrl("coap://coap.me/broken"));
     qDebug() << request.url().toString();
@@ -115,7 +115,7 @@ void CoapTests::brokenTest()
     reply->deleteLater();
 }
 
-void CoapTests::queryTest()
+void CoapTests::query()
 {
     CoapRequest request(QUrl("coap://coap.me/query?guh=awesome"));
     qDebug() << request.url().toString();
@@ -148,6 +148,56 @@ void CoapTests::subPath()
     QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
     QCOMPARE(reply->error(), CoapReply::NoError);
     QVERIFY2(reply->payload() == "TD_CORE_COAP_09 sub1", "Invalid payload");
+    reply->deleteLater();
+}
+
+void CoapTests::extendedOptionLength()
+{
+    CoapRequest request(QUrl("coap://coap.me:5683/123412341234123412341234"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+    CoapReply *reply = m_coap->get(request);
+    spy.wait();
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    QVERIFY2(reply->payload() == "very long resource name", "Invalid payload");
+    reply->deleteLater();
+}
+
+void CoapTests::extendedDelta_data()
+{
+    QTest::addColumn<QUrl>("url");
+
+    QTest::newRow("weird33") << QUrl("coap://coap.me/weird33");
+    QTest::newRow("weird44") << QUrl("coap://coap.me/weird44");
+    QTest::newRow("weird55") << QUrl("coap://coap.me/weird55");
+    QTest::newRow("weird333") << QUrl("coap://coap.me/weird333");
+    QTest::newRow("weird3333") << QUrl("coap://coap.me/weird3333");
+    QTest::newRow("weird33333") << QUrl("coap://coap.me/weird33333");
+}
+
+void CoapTests::extendedDelta()
+{
+    QFETCH(QUrl, url);
+
+    CoapRequest request(url);
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+    CoapReply *reply = m_coap->get(request);
+    spy.wait();
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    QVERIFY2(reply->payload().startsWith("resource with option"), "Invalid payload");
     reply->deleteLater();
 }
 

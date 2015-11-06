@@ -84,8 +84,14 @@ QDebug operator<<(QDebug debug, const CoapOption &coapOption)
         debug.nospace() << "CoapOption(" << optionEnum.valueToKey(coapOption.option()) << "): " << coapOption.data().toHex() << " Block #" << block.blockNumber() << " last block = " << block.isLastBlock() << " SZX:" << block.blockSize() << endl;
         break;
     }
+
     default:
-        debug.nospace() << "CoapOption(" << optionEnum.valueToKey(coapOption.option()) << "): " << coapOption.data() << " = " << "0x" + coapOption.data().toHex() << endl;
+        QString optionName = optionEnum.valueToKey(coapOption.option());
+        if (optionName.isNull()) {
+            debug.nospace() << "CoapOption(" << "Unknown" << "): " << "value = " << coapOption.option() << " -> " << coapOption.data() << " = " << "0x" + coapOption.data().toHex() << endl;
+        } else {
+            debug.nospace() << "CoapOption(" << optionName << "): " << coapOption.data() << " = " << "0x" + coapOption.data().toHex() << endl;
+        }
         break;
     }
 

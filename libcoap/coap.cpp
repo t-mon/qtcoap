@@ -179,7 +179,6 @@ void Coap::sendData(const QHostAddress &hostAddress, const quint16 &port, const 
 void Coap::sendCoapPdu(const QHostAddress &hostAddress, const quint16 &port, const CoapPdu &pdu)
 {
     qDebug() << "--->" << pdu;
-    qDebug() << "0x" + pdu.pack().toHex();
     m_socket->writeDatagram(pdu.pack(), hostAddress, port);
 }
 

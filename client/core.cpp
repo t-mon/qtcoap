@@ -21,27 +21,31 @@
 #include "core.h"
 #include "coaprequest.h"
 
-Core::Core(QObject *parent) : QObject(parent)
+Core::Core(QObject *parent) :
+    QObject(parent)
 {
+    // create coap instance (sould only be one / application)
     m_coap = new Coap(this);
     connect(m_coap, &Coap::replyFinished, this, &Core::onReplyFinished);
 
-    CoapRequest request(QUrl("coap://coap.me/hello"));
+    // request data
+    CoapRequest request(QUrl("coap://coap.me/weird33"));
     qDebug() << request.url().toString();
 
     CoapReply *reply = m_coap->get(request);
 
+    // check if the reply is allready finished (error case or for NonConfirmable reply)
     if (reply->isFinished()) {
         qDebug() << "---------------------------------------";
         if (reply->error() != CoapReply::NoError) {
             qDebug() << "Reply finished with error" << reply->errorString();
         } else {
             qDebug() << "Reply finished";
-            qDebug() << reply->payload();
         }
+
+        // Note: please don't forget to delete the reply
         reply->deleteLater();
     }
-
 }
 
 void Core::onReplyFinished(CoapReply *reply)
@@ -53,6 +57,8 @@ void Core::onReplyFinished(CoapReply *reply)
         qDebug() << "Reply finished";
         qDebug() << reply->payload();
     }
+
+    // Note: please don't forget to delete the reply
     reply->deleteLater();
 }
 

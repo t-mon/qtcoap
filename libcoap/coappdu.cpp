@@ -246,11 +246,62 @@ QByteArray CoapPdu::pack() const
     QByteArray optionsData;
     quint8 prevOption = 0;
     foreach (const CoapOption &option, m_options) {
-        quint8 optionDelta = (quint8)option.option() - prevOption;
+        quint8 optionByte = 0;
+
+        // encode option delta
+        quint16 optionDelta = (quint8)option.option() - prevOption;
         prevOption = (quint8)option.option();
-        quint8 optionByte = optionDelta << 4;
-        optionByte |= option.data().length();
+
+        quint8 extendedOptionDeltaByte = 0;
+        quint16 bigExtendedOptionDeltaByte = 0;
+        if (optionDelta < 13) {
+            optionByte = optionDelta << 4;
+        } else if (optionDelta < 270) {
+            // extended 8 bit option delta
+            optionByte = 13;
+            extendedOptionDeltaByte = optionDelta - 13;
+        } else {
+            // extended 16 bit option delta
+            optionByte = 14;
+            bigExtendedOptionDeltaByte = ((optionDelta - 269) >> 8) & 0xff;
+            bigExtendedOptionDeltaByte = (optionDelta - 269) & 0xff;
+        }
+
+        // encode option length
+        int optionLength = option.data().length();
+        quint8 extendedOptionLengthByte = 0;
+        quint16 bigExtendedOptionLengthByte = 0;
+        if (optionLength < 13) {
+            optionByte |= optionLength;
+        } else if (optionLength < 270) {
+            // extended 8 bit option length
+            optionByte |= 13;
+            extendedOptionLengthByte = optionLength - 13;
+        } else {
+            // extended 16 bit option length
+            optionByte |= 14;
+            bigExtendedOptionLengthByte = ((optionLength - 269) >> 8) & 0xff;
+            bigExtendedOptionLengthByte = (optionLength - 269) & 0xff;
+        }
+
+        // add obligatory option byte
         pduData.append((char)optionByte);
+
+        // check extended option delta bytes
+        if (extendedOptionDeltaByte != 0)
+            pduData.append((char)extendedOptionDeltaByte);
+
+        if (bigExtendedOptionDeltaByte != 0)
+            pduData.append((char)bigExtendedOptionDeltaByte);
+
+        // check extended option length bytes
+        if (extendedOptionLengthByte != 0)
+            pduData.append((char)extendedOptionLengthByte);
+
+        if (bigExtendedOptionLengthByte != 0)
+            pduData.append((char)extendedOptionLengthByte);
+
+        // add the option data
         pduData.append(option.data());
     }
     pduData.append(optionsData);
@@ -285,17 +336,44 @@ void CoapPdu::unpack(const QByteArray &data)
     setStatusCode(static_cast<StatusCode>(rawData[1]));
     setMessageId((qint16)data.mid(2,2).toHex().toUInt(0,16));
 
+    // parse options
     int index = 4 + tokenLength;
     quint8 optionByte = rawData[index];
     quint16 delta = 0;
-    // parse options
     while (QByteArray::number(optionByte, 16) != "ff" && optionByte != 0) {
-        quint16 optionNumber = ((optionByte & 0xf0) >> 4) + delta;
-        delta = optionNumber;
+        quint16 optionNumber = ((optionByte & 0xf0) >> 4);
 
+        // check option delta
+        if (optionNumber < 13) {
+            delta += optionNumber;
+        } else if (optionNumber == 13) {
+            // extended 8 bit option delta
+            delta += (quint8)(rawData[index + 1] + 13);
+            index += 1;
+        } else if (optionNumber == 14) {
+            // extended 16 bit option delta
+            delta += ((rawData[index + 1] << 8) | rawData[index + 2]) + 269;
+            index += 2;
+        } else if (optionNumber == 15) {
+            m_error = InvalidOptionDelta;
+        }
+
+        // check option length
         quint16 optionLength = (optionByte & 0xf);
+        if (optionLength == 13) {
+            // extended 8 bit option length
+            optionLength = (quint8)(rawData[index + 1] - 13);
+            index += 1;
+        } else if (optionLength == 14) {
+            // extended 16 bit option delta
+            optionLength = ((rawData[index + 1] << 8) | rawData[index + 2]) - 269;
+            index += 2;
+        } else if (optionLength == 15) {
+            m_error = InvalidOptionLength;
+        }
+
         QByteArray optionData = QByteArray((const char *)rawData + index + 1, optionLength);
-        addOption(static_cast<CoapOption::Option>(optionNumber), optionData);
+        addOption(static_cast<CoapOption::Option>(delta), optionData);
 
         index += optionLength + 1;
         optionByte = rawData[index];

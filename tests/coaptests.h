@@ -49,11 +49,16 @@ private slots:
 
     void invalidScheme();
 
-    void pingTest();
-    void helloTest();
-    void brokenTest();
-    void queryTest();
+    void ping();
+    void hello();
+    void broken();
+    void query();
     void subPath();
+    void extendedOptionLength();
+
+    void extendedDelta_data();
+    void extendedDelta();
+
     void secret();
     void separated();
 
