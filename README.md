@@ -9,10 +9,12 @@ The QtCoap lib allowes you communicatw with a CoAP (Constrained Application Prot
 * Piggybacked requests
 * Separated requests
 * Non-confirmable requests
+* extended option delta/lenght
 
 ## Example
 This example shows you the basic usage of the QtCoap lib:
 
+    ```cpp
     MyClass::MyClass(QObject *parent) : 
       QObject(parent)
     {
@@ -22,8 +24,9 @@ This example shows you the basic usage of the QtCoap lib:
       CoapRequest request(QUrl("coap://coap.me/hello"));
       coap->get(request);
     }
-
-
+    ```
+    
+    ```cpp
     void MyClass::onReplyFinished(CoapReply *reply)
     {
       if (reply->error() != CoapReply::NoError) {
@@ -33,3 +36,4 @@ This example shows you the basic usage of the QtCoap lib:
       qDebug() << "Reply finished" << reply->payload();
       reply->deleteLater();
     }
+    ```
