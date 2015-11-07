@@ -19,6 +19,9 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 #include "coapreply.h"
+#include "coappdu.h"
+
+#include <QMetaEnum>
 
 CoapRequest CoapReply::request() const
 {
@@ -92,7 +95,8 @@ CoapReply::CoapReply(const CoapRequest &request, QObject *parent) :
     m_retransmissions(1),
     m_contentType(CoapPdu::TextPlain),
     m_messageType(CoapPdu::Acknowledgement),
-    m_statusCode(CoapPdu::Empty)
+    m_statusCode(CoapPdu::Empty),
+    m_lockedUp(false)
 {
     m_timer = new QTimer(this);
     m_timer->setSingleShot(false);
@@ -182,4 +186,19 @@ void CoapReply::appendPayloadData(const QByteArray &data)
 void CoapReply::setRequestData(const QByteArray &requestData)
 {
     m_requestData = requestData;
+}
+
+QDebug operator<<(QDebug debug, CoapReply *reply)
+{
+    const QMetaObject &metaObject = CoapPdu::staticMetaObject;
+    QMetaEnum messageTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("MessageType"));
+    QMetaEnum statusCodeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("StatusCode"));
+    QMetaEnum contentTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ContentType"));
+    debug.nospace() << "CoapReply(" << messageTypeEnum.valueToKey(reply->messageType()) << ")" << endl;
+    debug.nospace() << "  Code: " << statusCodeEnum.valueToKey(reply->statusCode()) << endl;
+    debug.nospace() << "  Content: " << contentTypeEnum.valueToKey(reply->contentType()) << endl;
+    debug.nospace() << "  Payload size: " << reply->payload().size() << endl;
+    debug.nospace() << endl << reply->payload() << endl;
+
+    return debug.space();
 }

@@ -32,8 +32,8 @@
 /* Information about CoAP
  *
  * The Constrained Application Protocol (CoAP)          : https://tools.ietf.org/html/rfc7252
- * Constrained RESTful Environments (CoRE) Link Format  : http://tools.ietf.org/html/rfc6690
  * Blockwise transfers in CoAP                          : https://tools.ietf.org/html/draft-ietf-core-block-15
+ * Constrained RESTful Environments (CoRE) Link Format  : http://tools.ietf.org/html/rfc6690
  * Observing Resources in CoAP                          : https://tools.ietf.org/html/draft-ietf-core-observe-16
  */
 

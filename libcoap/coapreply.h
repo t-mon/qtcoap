@@ -101,11 +101,14 @@ private:
     CoapPdu::StatusCode m_requestMethod;
     QByteArray m_requestPayload;
     QByteArray m_requestData;
+    bool m_lockedUp;
 
 signals:
     void timeout();
     void finished();
     void error(const Error &code);
 };
+
+QDebug operator<<(QDebug debug, CoapReply *reply);
 
 #endif // COAPREPLY_H

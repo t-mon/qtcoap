@@ -156,6 +156,7 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
 
     QByteArray pduData = pdu.pack();
     reply->setRequestData(pduData);
+    reply->m_lockedUp = lookedUp;
     reply->m_timer->start();
 
     qDebug() << "--->" << pdu;
@@ -202,6 +203,55 @@ void Coap::processResponse(const CoapPdu &pdu)
             qDebug() << "Got empty ACK. Data will be sent separated.";
             return;
         }
+        // check if this is a blocked pdu
+        if (pdu.statusCode() == CoapPdu::Content && pdu.messageType() == CoapPdu::Acknowledgement && pdu.isBlock()) {
+            qDebug() << "got block" << pdu.block().blockNumber();
+            reply->appendPayloadData(pdu.payload());
+
+            // check if this was the last block
+            if (pdu.block().isLastBlock()) {
+                qDebug() << "Block finished";
+                reply->setStatusCode(pdu.statusCode());
+                reply->setContentType(pdu.contentType());
+                reply->appendPayloadData(pdu.payload());
+                reply->setFinished();
+                return;
+            }
+
+            CoapPdu nextBlockRequest;
+            nextBlockRequest.setContentType(reply->request().contentType());
+            nextBlockRequest.setMessageType(reply->request().messageType());
+            nextBlockRequest.setStatusCode(reply->requestMethod());
+            nextBlockRequest.setMessageId(pdu.messageId() + 1);
+            nextBlockRequest.setToken(pdu.token());
+
+            if (reply->m_lockedUp)
+                nextBlockRequest.addOption(CoapOption::UriHost, reply->request().url().host().toUtf8());
+
+            QStringList urlTokens = reply->request().url().path().split("/");
+            urlTokens.removeAll(QString());
+
+            foreach (const QString &token, urlTokens)
+                nextBlockRequest.addOption(CoapOption::UriPath, token.toUtf8());
+
+            if (reply->request().url().hasQuery())
+                nextBlockRequest.addOption(CoapOption::UriQuery, reply->request().url().query().toUtf8());
+
+            nextBlockRequest.addOption(CoapOption::Block2, CoapPduBlock::createBlock(pdu.block().blockNumber() + 1, 2, false));
+
+            QByteArray pduData = nextBlockRequest.pack();
+            reply->setRequestData(pduData);
+            reply->m_timer->start();
+
+            m_repliesId.insert(nextBlockRequest.messageId(), reply);
+
+            qDebug() << "--->" << nextBlockRequest;
+            sendData(reply->hostAddress(), 5683, pduData);
+
+            return;
+        }
+
+
         // Piggybacked response
         m_repliesToken.remove(pdu.token());
         reply->setStatusCode(pdu.statusCode());

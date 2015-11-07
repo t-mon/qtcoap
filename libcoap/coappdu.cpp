@@ -31,11 +31,35 @@ CoapPduBlock::CoapPduBlock()
 CoapPduBlock::CoapPduBlock(const QByteArray &blockData)
 {
     if (blockData.size() == 1) {
-        quint8 block = (quint8)blockData.toHex().toUInt(0,16);
-        m_blockNumber= block & 0xf0;
+        quint8 block = (quint8)blockData.at(0);
+        m_blockNumber = (block & 0xf0) >> 4;
         m_blockSize = (quint8) pow(2, (block & 0x07) + 4);
         m_isLastBlock = !(bool)((block & 0x8) >> 3);
+    } else if (blockData.size() == 2) {
+        quint16 block = (qint8)blockData.toHex().toUInt(0,16);
+        m_blockNumber = (block & 0xff0) >> 4;
+        m_blockSize = (quint8) pow(2, (block & 0x7) + 4);
+        m_isLastBlock = !(bool)((block & 0x8) >> 3);
     }
+}
+
+QByteArray CoapPduBlock::createBlock(const int &blockNumber, const int &blockSize, const bool &isLastBlock)
+{
+    QByteArray blockData;
+    if (blockNumber < 16) {
+        quint8 block = 0;
+        block = (quint8)blockSize;
+        block |= (quint8)!isLastBlock << 3;
+        block |= (quint8)blockNumber << 4;
+        blockData = QByteArray(1, (char)block);
+    } else if (blockNumber < 256) {
+        quint16 block = 0;
+        block = (quint8)blockSize << 4;
+        block |= (quint8)!isLastBlock << 3;
+        block |= (quint8)blockNumber << 4;
+        blockData = QByteArray(2, (char)block);
+    }
+    return blockData;
 }
 
 int CoapPduBlock::blockNumber() const
@@ -199,6 +223,11 @@ void CoapPdu::addOption(const CoapOption::Option &option, const QByteArray &data
     m_options.append(CoapOption(option, data));
 }
 
+CoapPduBlock CoapPdu::block() const
+{
+    return m_block;
+}
+
 bool CoapPdu::isBlock() const
 {
     return m_isBlock;
@@ -258,11 +287,11 @@ QByteArray CoapPdu::pack() const
             optionByte = optionDelta << 4;
         } else if (optionDelta < 270) {
             // extended 8 bit option delta
-            optionByte = 13;
+            optionByte = 13 << 4;
             extendedOptionDeltaByte = optionDelta - 13;
         } else {
             // extended 16 bit option delta
-            optionByte = 14;
+            optionByte = 14 << 4;
             bigExtendedOptionDeltaByte = ((optionDelta - 269) >> 8) & 0xff;
             bigExtendedOptionDeltaByte = (optionDelta - 269) & 0xff;
         }
@@ -390,13 +419,11 @@ QDebug operator<<(QDebug debug, const CoapPdu &coapPdu)
     const QMetaObject &metaObject = CoapPdu::staticMetaObject;
     QMetaEnum messageTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("MessageType"));
     QMetaEnum statusCodeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("StatusCode"));
-    //QMetaEnum contentTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ContentType"));
     debug.nospace() << "CoapPdu(" << messageTypeEnum.valueToKey(coapPdu.messageType()) << ")" << endl;
     debug.nospace() << "  Code: " << statusCodeEnum.valueToKey(coapPdu.statusCode()) << endl;
     debug.nospace() << "  Ver: " << coapPdu.version() << endl;
     debug.nospace() << "  Token: " << coapPdu.token().length() << " " << "0x"+ coapPdu.token().toHex() << endl;
     debug.nospace() << "  Message ID: " << coapPdu.messageId() << endl;
-    //debug.nospace() << "  ContentType: " << contentTypeEnum.valueToKey(coapPdu.contentType())<< endl;
     debug.nospace() << "  Payload size: " << coapPdu.payload().size() << endl;
     foreach (const CoapOption &option, coapPdu.options()) {
         debug.nospace() << "  " << option;

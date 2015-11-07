@@ -20,6 +20,8 @@
 
 #include "coaptests.h"
 
+#include <QJsonDocument>
+
 CoapTests::CoapTests(QObject *parent) : QObject(parent)
 {
     m_coap = new Coap(this);
@@ -169,6 +171,24 @@ void CoapTests::extendedOptionLength()
     reply->deleteLater();
 }
 
+void CoapTests::specialCharacters()
+{
+    CoapRequest request(QUrl("coap://coap.me:5683/blåbærsyltetøy"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+    CoapReply *reply = m_coap->get(request);
+    spy.wait();
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    QVERIFY2(reply->payload() == "Übergrößenträger = 特大の人 = 超大航母", "Invalid payload");
+    reply->deleteLater();
+}
+
 void CoapTests::extendedDelta_data()
 {
     QTest::addColumn<QUrl>("url");
@@ -288,6 +308,31 @@ void CoapTests::put()
     QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
     QCOMPARE(reply->error(), CoapReply::NoError);
     QVERIFY2(reply->payload() == "PUT OK", "Invalid payload");
+
+
+    reply->deleteLater();
+}
+
+void CoapTests::jsonMessage()
+{
+    CoapRequest request(QUrl("coap://coap.me:5683/5"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+    CoapReply *reply = m_coap->get(request);
+    spy.wait();
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->contentType(), CoapPdu::ApplicationJson);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    QJsonParseError error;
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(reply->payload(), &error);
+    QCOMPARE(error.error, QJsonParseError::NoError);
+
+    qDebug() << jsonDoc.toJson();
+
     reply->deleteLater();
 }
 

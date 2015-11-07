@@ -56,6 +56,8 @@ private slots:
     void subPath();
     void extendedOptionLength();
 
+    void specialCharacters();
+
     void extendedDelta_data();
     void extendedDelta();
 
@@ -65,6 +67,9 @@ private slots:
     void deleteResource();
     void post();
     void put();
+
+    void jsonMessage();
+
 };
 
 #endif // COAPTESTS_H

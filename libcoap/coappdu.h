@@ -56,6 +56,8 @@ public:
     CoapPduBlock();
     CoapPduBlock(const QByteArray &blockData);
 
+    static QByteArray createBlock(const int &blockNumber, const int &blockSize, const bool &isLastBlock);
+
     int blockNumber() const;
     int blockSize() const;
     bool isLastBlock() const;

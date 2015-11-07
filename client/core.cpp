@@ -29,7 +29,7 @@ Core::Core(QObject *parent) :
     connect(m_coap, &Coap::replyFinished, this, &Core::onReplyFinished);
 
     // request data
-    CoapRequest request(QUrl("coap://coap.me/weird33"));
+    CoapRequest request(QUrl("coap://coap.me/large"));
     qDebug() << request.url().toString();
 
     CoapReply *reply = m_coap->get(request);
@@ -54,8 +54,7 @@ void Core::onReplyFinished(CoapReply *reply)
     if (reply->error() != CoapReply::NoError) {
         qDebug() << "Reply finished with error" << reply->errorString();
     } else {
-        qDebug() << "Reply finished";
-        qDebug() << reply->payload();
+        qDebug() << reply;
     }
 
     // Note: please don't forget to delete the reply
