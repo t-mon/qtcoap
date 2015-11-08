@@ -24,61 +24,6 @@
 #include <QMetaEnum>
 #include <QTime>
 
-CoapPduBlock::CoapPduBlock()
-{
-}
-
-CoapPduBlock::CoapPduBlock(const QByteArray &blockData)
-{
-    if (blockData.size() == 1) {
-        quint8 block = (quint8)blockData.at(0);
-        m_blockNumber = (block & 0xf0) >> 4;
-        m_blockSize = (quint8) pow(2, (block & 0x07) + 4);
-        m_isLastBlock = !(bool)((block & 0x8) >> 3);
-    } else if (blockData.size() == 2) {
-        quint16 block = (qint8)blockData.toHex().toUInt(0,16);
-        m_blockNumber = (block & 0xff0) >> 4;
-        m_blockSize = (quint8) pow(2, (block & 0x7) + 4);
-        m_isLastBlock = !(bool)((block & 0x8) >> 3);
-    }
-}
-
-QByteArray CoapPduBlock::createBlock(const int &blockNumber, const int &blockSize, const bool &isLastBlock)
-{
-    QByteArray blockData;
-    if (blockNumber < 16) {
-        quint8 block = 0;
-        block = (quint8)blockSize;
-        block |= (quint8)!isLastBlock << 3;
-        block |= (quint8)blockNumber << 4;
-        blockData = QByteArray(1, (char)block);
-    } else if (blockNumber < 256) {
-        quint16 block = 0;
-        block = (quint8)blockSize << 4;
-        block |= (quint8)!isLastBlock << 3;
-        block |= (quint8)blockNumber << 4;
-        blockData = QByteArray(2, (char)block);
-    }
-    return blockData;
-}
-
-int CoapPduBlock::blockNumber() const
-{
-    return m_blockNumber;
-}
-
-int CoapPduBlock::blockSize() const
-{
-    return m_blockSize;
-}
-
-bool CoapPduBlock::isLastBlock() const
-{
-    return m_isLastBlock;
-}
-
-
-
 CoapPdu::CoapPdu(QObject *parent) :
     QObject(parent),
     m_version(1),
@@ -106,6 +51,22 @@ CoapPdu::CoapPdu(const QByteArray &data, QObject *parent) :
 {
     qsrand(QDateTime::currentMSecsSinceEpoch());
     unpack(data);
+}
+
+QString CoapPdu::getStatusCodeString(const CoapPdu::StatusCode &statusCode)
+{
+    QString statusCodeString;
+    const QMetaObject &metaObject = CoapPdu::staticMetaObject;
+    QMetaEnum statusCodeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("StatusCode"));
+    int classNumber = (statusCode & 0xE0) >> 5;
+    int detailNumber = statusCode & 0x1F;
+    statusCodeString.append(QString::number(classNumber) + ".");
+    if (detailNumber < 10)
+        statusCodeString.append("0");
+
+    statusCodeString.append(QString::number(detailNumber) + " ");
+    statusCodeString.append(statusCodeEnum.valueToKey(statusCode));
+    return statusCodeString;
 }
 
 quint8 CoapPdu::version() const
@@ -202,6 +163,7 @@ QList<CoapOption> CoapPdu::options() const
 
 void CoapPdu::addOption(const CoapOption::Option &option, const QByteArray &data)
 {
+    // set pdu data from the option
     switch (option) {
     case CoapOption::ContentFormat: {
         if (data.isEmpty()) {
@@ -220,7 +182,17 @@ void CoapPdu::addOption(const CoapOption::Option &option, const QByteArray &data
         break;
     }
 
-    m_options.append(CoapOption(option, data));
+    // insert option (keep the list sorted to ensure a positiv option delta)
+    int index = 0;
+    for (int i = 0; i < m_options.length(); i ++) {
+        index = i;
+        if (m_options.at(i).option() <= option) {
+            continue;
+        } else {
+            break;
+        }
+    }
+    m_options.insert(index + 1, CoapOption(option, data));
 }
 
 CoapPduBlock CoapPdu::block() const
@@ -347,7 +319,7 @@ void CoapPdu::unpack(const QByteArray &data)
 {
     // create a CoapPDU
     if (data.length() < 4) {
-        m_error = InvalidPduSize;
+        m_error = InvalidPduSizeError;
         qWarning() << "pdu to small" << data.length();
     }
 
@@ -357,7 +329,7 @@ void CoapPdu::unpack(const QByteArray &data)
     quint8 tokenLength = (rawData[0] & 0xf);
 
     if (tokenLength > 8) {
-        m_error = InvalidToken;
+        m_error = InvalidTokenError;
         qWarning() << "PDU token to long";
     }
 
@@ -384,7 +356,7 @@ void CoapPdu::unpack(const QByteArray &data)
             delta += ((rawData[index + 1] << 8) | rawData[index + 2]) + 269;
             index += 2;
         } else if (optionNumber == 15) {
-            m_error = InvalidOptionDelta;
+            m_error = InvalidOptionDeltaError;
         }
 
         // check option length
@@ -398,7 +370,7 @@ void CoapPdu::unpack(const QByteArray &data)
             optionLength = ((rawData[index + 1] << 8) | rawData[index + 2]) - 269;
             index += 2;
         } else if (optionLength == 15) {
-            m_error = InvalidOptionLength;
+            m_error = InvalidOptionLengthError;
         }
 
         QByteArray optionData = QByteArray((const char *)rawData + index + 1, optionLength);
@@ -418,9 +390,8 @@ QDebug operator<<(QDebug debug, const CoapPdu &coapPdu)
 {
     const QMetaObject &metaObject = CoapPdu::staticMetaObject;
     QMetaEnum messageTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("MessageType"));
-    QMetaEnum statusCodeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("StatusCode"));
     debug.nospace() << "CoapPdu(" << messageTypeEnum.valueToKey(coapPdu.messageType()) << ")" << endl;
-    debug.nospace() << "  Code: " << statusCodeEnum.valueToKey(coapPdu.statusCode()) << endl;
+    debug.nospace() << "  Code: " << CoapPdu::getStatusCodeString(coapPdu.statusCode()) << endl;
     debug.nospace() << "  Ver: " << coapPdu.version() << endl;
     debug.nospace() << "  Token: " << coapPdu.token().length() << " " << "0x"+ coapPdu.token().toHex() << endl;
     debug.nospace() << "  Message ID: " << coapPdu.messageId() << endl;

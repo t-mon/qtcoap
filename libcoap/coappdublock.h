@@ -18,41 +18,28 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAPREQUEST_H
-#define COAPREQUEST_H
+#ifndef COAPPDUBLOCK_H
+#define COAPPDUBLOCK_H
 
-#include <QUrl>
-#include <QHostAddress>
+#include <QByteArray>
 
-#include "coappdu.h"
-#include "coapoption.h"
-
-//class Coap;
-
-class CoapRequest
+class CoapPduBlock
 {
-//    friend class Coap;
 public:
-    CoapRequest(const QUrl &url = QUrl());
+    CoapPduBlock();
+    CoapPduBlock(const QByteArray &blockData);
 
-    void setUrl(const QUrl &url);
-    QUrl url() const;
+    static QByteArray createBlock(const int &blockNumber, const int &blockSize = 2, const bool &moreFlag = false);
 
-    void setContentType(const CoapPdu::ContentType contentType = CoapPdu::TextPlain);
-    CoapPdu::ContentType contentType() const;
-
-    void setMessageType(const CoapPdu::MessageType &messageType);
-    CoapPdu::MessageType messageType() const;
+    int blockNumber() const;
+    int blockSize() const;
+    bool moreFlag() const;
 
 private:
-    QUrl m_url;
-    CoapPdu::ContentType m_contentType;
-    CoapPdu::MessageType m_messageType;
-    CoapPdu::StatusCode m_statusCode;
-
-    void setStatusCode(const CoapPdu::StatusCode &statusCode);
-    CoapPdu::StatusCode statusCode();
+    int m_blockNumber;
+    int m_blockSize;
+    bool m_moreFlag;
 
 };
 
-#endif // COAPREQUEST_H
+#endif // COAPPDUBLOCK_H

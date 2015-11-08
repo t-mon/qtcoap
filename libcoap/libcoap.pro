@@ -14,11 +14,13 @@ SOURCES += \
     coappdu.cpp \
     coapoption.cpp \
     coaprequest.cpp \
-    coapreply.cpp
+    coapreply.cpp \
+    coappdublock.cpp
 
 HEADERS += \
     coap.h \
     coappdu.h \
     coapoption.h \
     coaprequest.h \
-    coapreply.h
+    coapreply.h \
+    coappdublock.h

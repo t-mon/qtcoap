@@ -134,7 +134,6 @@ CoapReply *Coap::deleteResource(const CoapRequest &request)
 void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
 {
     CoapPdu pdu;
-    pdu.setContentType(reply->request().contentType());
     pdu.setMessageType(reply->request().messageType());
     pdu.setStatusCode(reply->requestMethod());
     pdu.createMessageId();
@@ -151,6 +150,12 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
 
     if (reply->request().url().hasQuery())
         pdu.addOption(CoapOption::UriQuery, reply->request().url().query().toUtf8());
+
+    if (reply->requestMethod() == CoapPdu::Get)
+        pdu.addOption(CoapOption::Block2, CoapPduBlock::createBlock(0));
+
+    if (reply->requestMethod() == CoapPdu::Post || reply->requestMethod() == CoapPdu::Put)
+        pdu.addOption(CoapOption::ContentFormat, QByteArray(1, ((quint8)reply->request().contentType())));
 
     pdu.setPayload(reply->requestPayload());
 
@@ -209,11 +214,10 @@ void Coap::processResponse(const CoapPdu &pdu)
             reply->appendPayloadData(pdu.payload());
 
             // check if this was the last block
-            if (pdu.block().isLastBlock()) {
+            if (!pdu.block().moreFlag()) {
                 qDebug() << "Block finished";
                 reply->setStatusCode(pdu.statusCode());
                 reply->setContentType(pdu.contentType());
-                reply->appendPayloadData(pdu.payload());
                 reply->setFinished();
                 return;
             }
@@ -247,10 +251,8 @@ void Coap::processResponse(const CoapPdu &pdu)
 
             qDebug() << "--->" << nextBlockRequest;
             sendData(reply->hostAddress(), 5683, pduData);
-
             return;
         }
-
 
         // Piggybacked response
         m_repliesToken.remove(pdu.token());

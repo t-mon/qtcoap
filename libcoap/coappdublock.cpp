@@ -18,48 +18,59 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "core.h"
-#include "coaprequest.h"
+#include "coappdublock.h"
 
-Core::Core(QObject *parent) :
-    QObject(parent)
+CoapPduBlock::CoapPduBlock()
 {
-    // create coap instance (sould only be one / application)
-    m_coap = new Coap(this);
-    connect(m_coap, &Coap::replyFinished, this, &Core::onReplyFinished);
+}
 
-    // request data
-    CoapRequest request(QUrl("coap://coap.me/hello"));
-    request.setContentType(CoapPdu::ApplicationLink);
-    qDebug() << request.url().toString();
-
-    CoapReply *reply = m_coap->get(request);
-
-    // check if the reply is allready finished (error case or for NonConfirmable reply)
-    if (reply->isFinished()) {
-        qDebug() << "---------------------------------------";
-        if (reply->error() != CoapReply::NoError) {
-            qDebug() << "Reply finished with error" << reply->errorString();
-        } else {
-            qDebug() << "Reply finished";
-        }
-
-        // Note: please don't forget to delete the reply
-        reply->deleteLater();
+CoapPduBlock::CoapPduBlock(const QByteArray &blockData)
+{
+    if (blockData.size() == 1) {
+        quint8 block = (quint8)blockData.at(0);
+        m_blockNumber = (block & 0xf0) >> 4;
+        m_blockSize = (quint8) pow(2, (block & 0x07) + 4);
+        m_moreFlag = (bool)((block & 0x8) >> 3);
+    } else if (blockData.size() == 2) {
+        quint16 block = (quint16)blockData.toHex().toUInt(0, 16);
+        m_blockNumber = (int)(block & 0xff0) >> 4;
+        m_blockSize = (int) pow(2, (block & 0x07) + 4);
+        m_moreFlag = (bool)((block & 0x08) >> 3);
     }
 }
 
-void Core::onReplyFinished(CoapReply *reply)
+QByteArray CoapPduBlock::createBlock(const int &blockNumber, const int &blockSize, const bool &moreFlag)
 {
-    qDebug() << "---------------------------------------";
-    if (reply->error() != CoapReply::NoError) {
-        qDebug() << "Reply finished with error" << reply->errorString();
-    } else {
-        qDebug() << reply;
+    QByteArray blockData;
+    if (blockNumber < 16) {
+        quint8 block = (quint8)blockSize;
+        block |= (quint8)moreFlag << 3;
+        block |= (quint8)blockNumber << 4;
+        blockData = QByteArray(1, (char)block);
+    } else if (blockNumber < 256) {
+        quint16 block = (quint16)blockSize;
+        block |= (quint16)moreFlag << 3;
+        block |= (quint8)blockNumber << 4;
+        blockData.resize(2);
+        blockData.fill(0);
+        blockData[0] = (quint8)(block >> 8);
+        blockData[1] = (quint8)(block & 0xff);
     }
-
-    // Note: please don't forget to delete the reply
-    reply->deleteLater();
+    return blockData;
 }
 
+int CoapPduBlock::blockNumber() const
+{
+    return m_blockNumber;
+}
+
+int CoapPduBlock::blockSize() const
+{
+    return m_blockSize;
+}
+
+bool CoapPduBlock::moreFlag() const
+{
+    return m_moreFlag;
+}
 

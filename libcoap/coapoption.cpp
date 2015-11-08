@@ -81,7 +81,7 @@ QDebug operator<<(QDebug debug, const CoapOption &coapOption)
     case CoapOption::Block2: {
         // SZX = size exponent
         CoapPduBlock block(coapOption.data());
-        debug.nospace() << "CoapOption(" << optionEnum.valueToKey(coapOption.option()) << "): " << coapOption.data().toHex() << " Block #" << block.blockNumber() << " last block = " << block.isLastBlock() << " SZX:" << block.blockSize() << endl;
+        debug.nospace() << "CoapOption(" << optionEnum.valueToKey(coapOption.option()) << "): " << coapOption.data().toHex() << " Block #" << block.blockNumber() << ", More flag = " << block.moreFlag() << ", SZX:" << block.blockSize() << endl;
         break;
     }
 

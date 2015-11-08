@@ -25,6 +25,7 @@
 #include <QObject>
 
 #include "coapoption.h"
+#include "coappdublock.h"
 
 // PDU = Protocol Data Unit
 
@@ -39,35 +40,7 @@
  *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  *      |1 1 1 1 1 1 1 1|    Payload (if any) ...
  *      +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
- *
- *  Version (Ver): 2-bit unsigned integer.  Indicates the CoAP version number.
- *  Type (T): 2-bit unsigned integer.  Indicates if this message is of
- *            type Confirmable (0), Non-confirmable (1), Acknowledgement (2), or Reset (3)
- *  Code: 8-bit unsigned integer, split into a 3-bit class (most
- *        significant bits) and a 5-bit detail (least significant bits)
- *  Message ID: 16-bit unsigned integer in network byte order.
- *  Token Length (TKL): 4-bit unsigned integer.
- *
  */
-
-class CoapPduBlock
-{
-public:
-    CoapPduBlock();
-    CoapPduBlock(const QByteArray &blockData);
-
-    static QByteArray createBlock(const int &blockNumber, const int &blockSize, const bool &isLastBlock);
-
-    int blockNumber() const;
-    int blockSize() const;
-    bool isLastBlock() const;
-
-private:
-    int m_blockNumber;
-    int m_blockSize;
-    bool m_isLastBlock;
-
-};
 
 class CoapPdu : public QObject
 {
@@ -88,7 +61,7 @@ public:
     // Methods:       https://tools.ietf.org/html/rfc7252#section-5.8
     // Respond codes: https://tools.ietf.org/html/rfc7252#section-12.1.2
     enum StatusCode {
-        Empty                    = 0x00,  // Empty mesage
+        Empty                    = 0x00,  // Empty mesage (ping)
         Get                      = 0x01,  // Method GET
         Post                     = 0x02,  // Method POST
         Put                      = 0x03,  // Method PUT
@@ -98,6 +71,7 @@ public:
         Valid                    = 0x43,  // 2.03
         Changed                  = 0x44,  // 2.04
         Content                  = 0x45,  // 2.05
+        Continue                 = 0x95,  // 2.31 (Block)
         BadRequest               = 0x80,  // 4.00
         Unauthorized             = 0x81,  // 4.01
         BadOption                = 0x82,  // 4.02
@@ -105,8 +79,9 @@ public:
         NotFound                 = 0x84,  // 4.04
         MethodNotAllowed         = 0x85,  // 4.05
         NotAcceptable            = 0x86,  // 4.06
+        RequestEntityIncomplete  = 0x88,  // 4.08 (Block)
         PreconditionFailed       = 0x8c,  // 4.12
-        RequestEntityTooLarge    = 0x8d,  // 4.13
+        RequestEntityTooLarge    = 0x8d,  // 4.13 (Block)
         UnsupportedContentFormat = 0x8f,  // 4.15
         InternalServerError      = 0xa0,  // 5.00
         NotImplemented           = 0xa1,  // 5.01
@@ -128,15 +103,17 @@ public:
 
     enum Error {
         NoError,
-        InvalidToken,
-        InvalidPduSize,
-        InvalidOptionDelta,
-        InvalidOptionLength,
-        UnknownOption
+        InvalidTokenError,
+        InvalidPduSizeError,
+        InvalidOptionDeltaError,
+        InvalidOptionLengthError,
+        UnknownOptionError
     };
 
     CoapPdu(QObject *parent = 0);
     CoapPdu(const QByteArray &data, QObject *parent = 0);
+
+    static QString getStatusCodeString(const StatusCode &statusCode);
 
     // header fields
     quint8 version() const;

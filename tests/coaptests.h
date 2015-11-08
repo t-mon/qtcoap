@@ -70,6 +70,8 @@ private slots:
 
     void jsonMessage();
 
+    void largeDownload();
+
 };
 
 #endif // COAPTESTS_H

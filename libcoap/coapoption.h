@@ -45,8 +45,8 @@ public:
         UriQuery      = 15,
         Accept        = 17,
         LocationQuery = 20,
-        Block2        = 23,
-        Block1        = 27,
+        Block2        = 23, // (Block)
+        Block1        = 27, // (Block)
         ProxyUri      = 35,
         ProxyScheme   = 39,
         Size1         = 60

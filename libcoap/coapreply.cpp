@@ -181,6 +181,7 @@ void CoapReply::appendPayloadData(const QByteArray &data)
 {
     m_payload.append(data);
     m_timer->start();
+    m_retransmissions = 1;
 }
 
 void CoapReply::setRequestData(const QByteArray &requestData)
@@ -192,10 +193,9 @@ QDebug operator<<(QDebug debug, CoapReply *reply)
 {
     const QMetaObject &metaObject = CoapPdu::staticMetaObject;
     QMetaEnum messageTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("MessageType"));
-    QMetaEnum statusCodeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("StatusCode"));
     QMetaEnum contentTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ContentType"));
     debug.nospace() << "CoapReply(" << messageTypeEnum.valueToKey(reply->messageType()) << ")" << endl;
-    debug.nospace() << "  Code: " << statusCodeEnum.valueToKey(reply->statusCode()) << endl;
+    debug.nospace() << "  Code: " << CoapPdu::getStatusCodeString(reply->statusCode()) << endl;
     debug.nospace() << "  Content: " << contentTypeEnum.valueToKey(reply->contentType()) << endl;
     debug.nospace() << "  Payload size: " << reply->payload().size() << endl;
     debug.nospace() << endl << reply->payload() << endl;
