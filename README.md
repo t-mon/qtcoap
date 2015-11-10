@@ -1,5 +1,5 @@
 # QtCoap
-=====================================================================
+
 Constrained Application Protocol (CoAP) library written in Qt.
 
 The QtCoap lib allowes you communicate with a CoAP server according to the [RFC7252](https://tools.ietf.org/html/rfc7252) standard.
