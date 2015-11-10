@@ -157,6 +157,16 @@ QHostAddress CoapReply::hostAddress() const
     return m_hostAddress;
 }
 
+void CoapReply::setPort(const int &port)
+{
+    m_port = port;
+}
+
+int CoapReply::port() const
+{
+    return m_port;
+}
+
 void CoapReply::setRequestPayload(const QByteArray &requestPayload)
 {
     m_requestPayload = requestPayload;
@@ -195,10 +205,12 @@ QDebug operator<<(QDebug debug, CoapReply *reply)
     QMetaEnum messageTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("MessageType"));
     QMetaEnum contentTypeEnum = metaObject.enumerator(metaObject.indexOfEnumerator("ContentType"));
     debug.nospace() << "CoapReply(" << messageTypeEnum.valueToKey(reply->messageType()) << ")" << endl;
-    debug.nospace() << "  Code: " << CoapPdu::getStatusCodeString(reply->statusCode()) << endl;
-    debug.nospace() << "  Content: " << contentTypeEnum.valueToKey(reply->contentType()) << endl;
+    debug.nospace() << "  Status code: " << CoapPdu::getStatusCodeString(reply->statusCode()) << endl;
+    debug.nospace() << "  Content type: " << contentTypeEnum.valueToKey(reply->contentType()) << endl;
     debug.nospace() << "  Payload size: " << reply->payload().size() << endl;
-    debug.nospace() << endl << reply->payload() << endl;
+
+    if (!reply->payload().isEmpty())
+        debug.nospace() << endl << reply->payload() << endl;
 
     return debug.space();
 }

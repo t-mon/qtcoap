@@ -22,15 +22,14 @@
 #include "coappdu.h"
 #include "coapoption.h"
 
-Coap::Coap(QObject *parent) :
+Coap::Coap(QObject *parent, const quint16 &port) :
     QObject(parent)
 {
     m_socket = new QUdpSocket(this);
 
-    if (!m_socket->bind(QHostAddress::Any, 5683)) {
-        qWarning() << "Could not bind " << m_socket->errorString();
-        return;
-    }
+    if (!m_socket->bind(QHostAddress::Any, port))
+        qWarning() << "Could not bind to port" << port << m_socket->errorString();
+
     connect(m_socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
 }
 
@@ -154,10 +153,17 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
     if (reply->requestMethod() == CoapPdu::Get)
         pdu.addOption(CoapOption::Block2, CoapPduBlock::createBlock(0));
 
-    if (reply->requestMethod() == CoapPdu::Post || reply->requestMethod() == CoapPdu::Put)
+    if (reply->requestMethod() == CoapPdu::Post || reply->requestMethod() == CoapPdu::Put) {
         pdu.addOption(CoapOption::ContentFormat, QByteArray(1, ((quint8)reply->request().contentType())));
 
-    pdu.setPayload(reply->requestPayload());
+        // check if we have to block the payload
+        if (reply->requestPayload().size() > 64) {
+            pdu.addOption(CoapOption::Block1, CoapPduBlock::createBlock(0, 2, true));
+            pdu.setPayload(reply->requestPayload().mid(0, 64));
+        } else {
+            pdu.setPayload(reply->requestPayload());
+        }
+    }
 
     QByteArray pduData = pdu.pack();
     reply->setRequestData(pduData);
@@ -166,14 +172,14 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
 
     qDebug() << "--->" << pdu;
 
-    // create reply
+    // send the data
     if (reply->request().messageType() == CoapPdu::NonConfirmable) {
-        sendData(reply->hostAddress(), 5683, pduData);
+        sendData(reply->hostAddress(), reply->port(), pduData);
         reply->setFinished();
     } else {
         m_repliesId.insert(pdu.messageId(), reply);
         m_repliesToken.insert(pdu.token(), reply);
-        sendData(reply->hostAddress(), 5683, pduData);
+        sendData(reply->hostAddress(), reply->port(), pduData);
     }
 }
 
@@ -202,90 +208,175 @@ void Coap::processResponse(const CoapPdu &pdu)
 
     // check if the message is a response to a reply (message id based check)
     if (reply) {
-        // check if this is an empty ACK response (which indicates a separated response)
-        if (pdu.statusCode() == CoapPdu::Empty && pdu.messageType() == CoapPdu::Acknowledgement) {
-            reply->m_timer->stop();
-            qDebug() << "Got empty ACK. Data will be sent separated.";
-            return;
-        }
-        // check if this is a blocked pdu
-        if (pdu.statusCode() == CoapPdu::Content && pdu.messageType() == CoapPdu::Acknowledgement && pdu.isBlock()) {
-            qDebug() << "got block" << pdu.block().blockNumber();
-            reply->appendPayloadData(pdu.payload());
-
-            // check if this was the last block
-            if (!pdu.block().moreFlag()) {
-                qDebug() << "Block finished";
-                reply->setStatusCode(pdu.statusCode());
-                reply->setContentType(pdu.contentType());
-                reply->setFinished();
-                return;
-            }
-
-            CoapPdu nextBlockRequest;
-            nextBlockRequest.setContentType(reply->request().contentType());
-            nextBlockRequest.setMessageType(reply->request().messageType());
-            nextBlockRequest.setStatusCode(reply->requestMethod());
-            nextBlockRequest.setMessageId(pdu.messageId() + 1);
-            nextBlockRequest.setToken(pdu.token());
-
-            if (reply->m_lockedUp)
-                nextBlockRequest.addOption(CoapOption::UriHost, reply->request().url().host().toUtf8());
-
-            QStringList urlTokens = reply->request().url().path().split("/");
-            urlTokens.removeAll(QString());
-
-            foreach (const QString &token, urlTokens)
-                nextBlockRequest.addOption(CoapOption::UriPath, token.toUtf8());
-
-            if (reply->request().url().hasQuery())
-                nextBlockRequest.addOption(CoapOption::UriQuery, reply->request().url().query().toUtf8());
-
-            nextBlockRequest.addOption(CoapOption::Block2, CoapPduBlock::createBlock(pdu.block().blockNumber() + 1, 2, false));
-
-            QByteArray pduData = nextBlockRequest.pack();
-            reply->setRequestData(pduData);
-            reply->m_timer->start();
-
-            m_repliesId.insert(nextBlockRequest.messageId(), reply);
-
-            qDebug() << "--->" << nextBlockRequest;
-            sendData(reply->hostAddress(), 5683, pduData);
-            return;
-        }
-
-        // Piggybacked response
-        m_repliesToken.remove(pdu.token());
-        reply->setStatusCode(pdu.statusCode());
-        reply->setContentType(pdu.contentType());
-        reply->appendPayloadData(pdu.payload());
-        reply->setFinished();
+        processIdBasedResponse(reply, pdu);
         return;
-    } else {
-        // check if we know the message by token (message token based check)
-        reply = m_repliesToken.take(pdu.token());
-        if (reply) {
-            // Separate Response
-            CoapPdu responsePdu;
-            responsePdu.setMessageType(CoapPdu::Acknowledgement);
-            responsePdu.setStatusCode(CoapPdu::Empty);
-            responsePdu.setMessageId(pdu.messageId());
-            sendCoapPdu(reply->hostAddress(), 5683, responsePdu);
+    }
 
-            reply->setStatusCode(pdu.statusCode());
-            reply->setContentType(pdu.contentType());
-            reply->appendPayloadData(pdu.payload());
-            reply->setFinished();
-            return;
-        }
+    // check if we know the message by token (message token based check)
+    reply = m_repliesToken.take(pdu.token());
+    if (reply) {
+        processTokenBasedResponse(reply, pdu);
+        return;
     }
 
     qDebug() << "Got message without request";
 }
 
+void Coap::processIdBasedResponse(CoapReply *reply, const CoapPdu &pdu)
+{
+    // check if this is an empty ACK response (which indicates a separated response)
+    if (pdu.statusCode() == CoapPdu::Empty && pdu.messageType() == CoapPdu::Acknowledgement) {
+        reply->m_timer->stop();
+        qDebug() << "Got empty ACK. Data will be sent separated.";
+        return;
+    }
+
+    // check if this is a Block1 pdu
+    if (pdu.messageType() == CoapPdu::Acknowledgement && pdu.hasOption(CoapOption::Block1)) {
+        processBlock1Response(reply, pdu);
+        return;
+    }
+
+    // check if this is a Block2 pdu
+    if (pdu.messageType() == CoapPdu::Acknowledgement && pdu.hasOption(CoapOption::Block2)) {
+        processBlock2Response(reply, pdu);
+        return;
+    }
+
+    // Piggybacked response
+    m_repliesToken.remove(pdu.token());
+    reply->setStatusCode(pdu.statusCode());
+    reply->setContentType(pdu.contentType());
+    reply->appendPayloadData(pdu.payload());
+    reply->setFinished();
+}
+
+void Coap::processTokenBasedResponse(CoapReply *reply, const CoapPdu &pdu)
+{
+    // Separate Response
+    CoapPdu responsePdu;
+    responsePdu.setMessageType(CoapPdu::Acknowledgement);
+    responsePdu.setStatusCode(CoapPdu::Empty);
+    responsePdu.setMessageId(pdu.messageId());
+    sendCoapPdu(reply->hostAddress(), reply->port(), responsePdu);
+
+    reply->setStatusCode(pdu.statusCode());
+    reply->setContentType(pdu.contentType());
+    reply->appendPayloadData(pdu.payload());
+    reply->setFinished();
+}
+
+void Coap::processBlock1Response(CoapReply *reply, const CoapPdu &pdu)
+{
+    qDebug() << "sent successfully block #" << pdu.block().blockNumber();
+
+    // create next block
+    int index = (pdu.block().blockNumber() * 64) + 64;
+    QByteArray newBlockData = reply->requestPayload().mid(index, 64);
+    bool moreFlag = true;
+
+    // check if this was the last block
+    if (newBlockData.isEmpty()) {
+        reply->setStatusCode(pdu.statusCode());
+        reply->setContentType(pdu.contentType());
+        reply->setFinished();
+        return;
+    }
+
+    // check if this is the last block or there will be no next block
+    if (newBlockData.size() < 64 || (index + 64) == reply->requestPayload().size())
+        moreFlag = false;
+
+    CoapPdu nextBlockRequest;
+    nextBlockRequest.setContentType(reply->request().contentType());
+    nextBlockRequest.setMessageType(reply->request().messageType());
+    nextBlockRequest.setStatusCode(reply->requestMethod());
+    nextBlockRequest.setMessageId(pdu.messageId() + 1);
+    nextBlockRequest.setToken(pdu.token());
+
+    if (reply->m_lockedUp)
+        nextBlockRequest.addOption(CoapOption::UriHost, reply->request().url().host().toUtf8());
+
+    if (reply->port() != 5683)
+        nextBlockRequest.addOption(CoapOption::UriPort, QByteArray::number(reply->request().url().port()));
+
+    QStringList urlTokens = reply->request().url().path().split("/");
+    urlTokens.removeAll(QString());
+
+    foreach (const QString &token, urlTokens)
+        nextBlockRequest.addOption(CoapOption::UriPath, token.toUtf8());
+
+    if (reply->request().url().hasQuery())
+        nextBlockRequest.addOption(CoapOption::UriQuery, reply->request().url().query().toUtf8());
+
+    nextBlockRequest.addOption(CoapOption::Block1, CoapPduBlock::createBlock(pdu.block().blockNumber() + 1, 2, moreFlag));
+
+    nextBlockRequest.setPayload(newBlockData);
+
+    QByteArray pduData = nextBlockRequest.pack();
+    reply->setRequestData(pduData);
+    reply->m_timer->start();
+    reply->m_retransmissions = 1;
+
+    m_repliesId.insert(nextBlockRequest.messageId(), reply);
+
+    qDebug() << "--->" << nextBlockRequest;
+    sendData(reply->hostAddress(), reply->port(), pduData);
+}
+
+void Coap::processBlock2Response(CoapReply *reply, const CoapPdu &pdu)
+{
+    reply->appendPayloadData(pdu.payload());
+
+    // check if this was the last block
+    if (!pdu.block().moreFlag()) {
+        qDebug() << "Block finished";
+        reply->setStatusCode(pdu.statusCode());
+        reply->setContentType(pdu.contentType());
+        reply->setFinished();
+        return;
+    }
+
+    CoapPdu nextBlockRequest;
+    nextBlockRequest.setContentType(reply->request().contentType());
+    nextBlockRequest.setMessageType(reply->request().messageType());
+    nextBlockRequest.setStatusCode(reply->requestMethod());
+    nextBlockRequest.setMessageId(pdu.messageId() + 1);
+    nextBlockRequest.setToken(pdu.token());
+
+    if (reply->m_lockedUp)
+        nextBlockRequest.addOption(CoapOption::UriHost, reply->request().url().host().toUtf8());
+
+    if (reply->port() != 5683)
+        nextBlockRequest.addOption(CoapOption::UriPort, QByteArray::number(reply->request().url().port()));
+
+
+    QStringList urlTokens = reply->request().url().path().split("/");
+    urlTokens.removeAll(QString());
+
+    foreach (const QString &token, urlTokens)
+        nextBlockRequest.addOption(CoapOption::UriPath, token.toUtf8());
+
+    if (reply->request().url().hasQuery())
+        nextBlockRequest.addOption(CoapOption::UriQuery, reply->request().url().query().toUtf8());
+
+    nextBlockRequest.addOption(CoapOption::Block2, CoapPduBlock::createBlock(pdu.block().blockNumber() + 1, 2, false));
+
+    QByteArray pduData = nextBlockRequest.pack();
+    reply->setRequestData(pduData);
+    reply->m_timer->start();
+
+    m_repliesId.insert(nextBlockRequest.messageId(), reply);
+
+    qDebug() << "--->" << nextBlockRequest;
+    sendData(reply->hostAddress(), reply->port(), pduData);
+}
+
 void Coap::hostLookupFinished(const QHostInfo &hostInfo)
 {
     CoapReply *reply = m_runningHostLookups.take(hostInfo.lookupId());;
+    reply->setPort(reply->request().url().port(5683));
+
 
     if (hostInfo.error() != QHostInfo::NoError) {
         qDebug() << "Host lookup for" << reply->request().url().host() << "failed:" << hostInfo.errorString();
@@ -334,7 +425,7 @@ void Coap::onReplyTimeout()
         qDebug() << QString("Reply timeout: resending message %1/4").arg(reply->m_retransmissions);
     }
     reply->resend();
-    m_socket->writeDatagram(reply->requestData(), reply->hostAddress(), 5683);
+    m_socket->writeDatagram(reply->requestData(), reply->hostAddress(), reply->port());
 }
 
 void Coap::onReplyFinished()

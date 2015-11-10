@@ -18,63 +18,39 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAPTESTS_H
-#define COAPTESTS_H
+#include "corelinkparser.h"
 
-#include <QUrl>
-#include <QObject>
-#include <QHostInfo>
-#include <QHostAddress>
+#include <QDebug>
 
-#include <QSignalSpy>
-#include <QtTest>
-
-#include "coap.h"
-#include "coappdu.h"
-#include "coapreply.h"
-
-class CoapTests : public QObject
+CoreLinkParser::CoreLinkParser(const QByteArray &data, QObject *parent) :
+    QObject(parent),
+    m_data(data)
 {
-    Q_OBJECT
+    QList<QByteArray> linkList = data.split(',');
 
-public:
-    explicit CoapTests(QObject *parent = 0);
+    foreach (const QByteArray &linkLine, linkList) {
+        QList<QByteArray> valueList = linkLine.split(';');
+        CoreLink link;
+        foreach (const QByteArray &value, valueList) {
+            if (value.startsWith("</")) {
+                link.setPath(QString(value.mid(2, value.length()-3)));
+            } else if (value.startsWith("rt=")) {
+                link.setResourceType(QString(value.right(value.length() - 3)).remove('"'));
+            } else if (value.startsWith("if=")) {
+                link.setInterfaceDescription(QString(value.right(value.length() - 3)).remove('"'));
+            } else if (value.startsWith("sz=")) {
+                link.setMaximumSize(value.right(value.length() - 3).toInt());
+            } else if (value.startsWith("ct=")) {
+                link.setContentType(static_cast<CoapPdu::ContentType>(value.right(value.length() - 3).toUInt()));
+            }
+        }
+        m_links.append(link);
+    }
+}
 
-private:
-    Coap *m_coap;
-    QByteArray m_uploadData;
+QList<CoreLink> CoreLinkParser::links() const
+{
+    return m_links;
+}
 
-private slots:
-    void invalidUrl_data();
-    void invalidUrl();
 
-    void invalidScheme();
-
-    void ping();
-    void hello();
-    void broken();
-    void query();
-    void subPath();
-    void extendedOptionLength();
-
-    void specialCharacters();
-
-    void extendedDelta_data();
-    void extendedDelta();
-
-    void secret();
-    void separated();
-
-    void deleteResource();
-    void post();
-    void put();
-
-    void jsonMessage();
-
-    void largeDownload();
-    void largeCreate();
-    void largeUpdate();
-
-};
-
-#endif // COAPTESTS_H

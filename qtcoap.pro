@@ -1,11 +1,11 @@
 TEMPLATE=subdirs
 
-SUBDIRS += libcoap client tests
+SUBDIRS += libqtcoap client tests
 
-client.depends = libcoap
-tests.depends = libcoap
+client.depends = libqtcoap
+tests.depends = libqtcoap
 
-QT+= network
+QT += network
 
 QMAKE_CXXFLAGS += -Werror
 CONFIG += c++11

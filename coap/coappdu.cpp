@@ -32,7 +32,6 @@ CoapPdu::CoapPdu(QObject *parent) :
     m_messageId(0),
     m_contentType(TextPlain),
     m_payload(QByteArray()),
-    m_isBlock(false),
     m_error(NoError)
 {
     qsrand(QDateTime::currentMSecsSinceEpoch());
@@ -46,7 +45,6 @@ CoapPdu::CoapPdu(const QByteArray &data, QObject *parent) :
     m_messageId(0),
     m_contentType(TextPlain),
     m_payload(QByteArray()),
-    m_isBlock(false),
     m_error(NoError)
 {
     qsrand(QDateTime::currentMSecsSinceEpoch());
@@ -173,9 +171,12 @@ void CoapPdu::addOption(const CoapOption::Option &option, const QByteArray &data
         }
         break;
     }
+    case CoapOption::Block1: {
+        m_block = CoapPduBlock(data);
+        break;
+    }
     case CoapOption::Block2: {
         m_block = CoapPduBlock(data);
-        m_isBlock = true;
         break;
     }
     default:
@@ -200,9 +201,13 @@ CoapPduBlock CoapPdu::block() const
     return m_block;
 }
 
-bool CoapPdu::isBlock() const
+bool CoapPdu::hasOption(const CoapOption::Option &option) const
 {
-    return m_isBlock;
+    foreach (const CoapOption &o, m_options) {
+        if (o.option() == option)
+            return true;
+    }
+    return false;
 }
 
 void CoapPdu::clear()

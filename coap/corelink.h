@@ -18,63 +18,43 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAPTESTS_H
-#define COAPTESTS_H
+#ifndef CORELINK_H
+#define CORELINK_H
 
-#include <QUrl>
 #include <QObject>
-#include <QHostInfo>
-#include <QHostAddress>
+#include <QDebug>
 
-#include <QSignalSpy>
-#include <QtTest>
-
-#include "coap.h"
 #include "coappdu.h"
-#include "coapreply.h"
 
-class CoapTests : public QObject
+class CoreLink
 {
-    Q_OBJECT
-
 public:
-    explicit CoapTests(QObject *parent = 0);
+    CoreLink();
+
+    QString path() const;
+    void setPath(const QString &path);
+
+    QString resourceType() const;
+    void setResourceType(const QString &resourceType);
+
+    QString interfaceDescription() const;
+    void setInterfaceDescription(const QString &interfaceDescription);
+
+    int maximumSize() const;
+    void setMaximumSize(const int &maximumSize);
+
+    CoapPdu::ContentType contentType() const;
+    void setContentType(const CoapPdu::ContentType &contentType);
 
 private:
-    Coap *m_coap;
-    QByteArray m_uploadData;
-
-private slots:
-    void invalidUrl_data();
-    void invalidUrl();
-
-    void invalidScheme();
-
-    void ping();
-    void hello();
-    void broken();
-    void query();
-    void subPath();
-    void extendedOptionLength();
-
-    void specialCharacters();
-
-    void extendedDelta_data();
-    void extendedDelta();
-
-    void secret();
-    void separated();
-
-    void deleteResource();
-    void post();
-    void put();
-
-    void jsonMessage();
-
-    void largeDownload();
-    void largeCreate();
-    void largeUpdate();
+    QString m_path;
+    QString m_resourceType;
+    QString m_interfaceDescription;
+    int m_maximumSize;
+    CoapPdu::ContentType m_contentType;
 
 };
 
-#endif // COAPTESTS_H
+QDebug operator<<(QDebug debug, const CoreLink &link);
+
+#endif // CORELINK_H

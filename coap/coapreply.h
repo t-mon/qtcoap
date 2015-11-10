@@ -88,6 +88,9 @@ private:
     void setHostAddress(const QHostAddress &address);
     QHostAddress hostAddress() const;
 
+    void setPort(const int &port);
+    int port() const;
+
     void setRequestPayload(const QByteArray &requestPayload);
     QByteArray requestPayload() const;
 
@@ -98,6 +101,7 @@ private:
     QByteArray requestData() const;
 
     QHostAddress m_hostAddress;
+    int m_port;
     CoapPdu::StatusCode m_requestMethod;
     QByteArray m_requestPayload;
     QByteArray m_requestData;

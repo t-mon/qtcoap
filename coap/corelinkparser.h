@@ -18,63 +18,26 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAPTESTS_H
-#define COAPTESTS_H
+#ifndef COREPARSER_H
+#define COREPARSER_H
 
-#include <QUrl>
 #include <QObject>
-#include <QHostInfo>
-#include <QHostAddress>
 
-#include <QSignalSpy>
-#include <QtTest>
+#include "corelink.h"
 
-#include "coap.h"
-#include "coappdu.h"
-#include "coapreply.h"
+// Constrained RESTful Environments (CoRE) Link Format  : http://tools.ietf.org/html/rfc6690
 
-class CoapTests : public QObject
+class CoreLinkParser : public QObject
 {
     Q_OBJECT
-
 public:
-    explicit CoapTests(QObject *parent = 0);
+    explicit CoreLinkParser(const QByteArray &data, QObject *parent = 0);
+
+    QList<CoreLink> links() const;
 
 private:
-    Coap *m_coap;
-    QByteArray m_uploadData;
-
-private slots:
-    void invalidUrl_data();
-    void invalidUrl();
-
-    void invalidScheme();
-
-    void ping();
-    void hello();
-    void broken();
-    void query();
-    void subPath();
-    void extendedOptionLength();
-
-    void specialCharacters();
-
-    void extendedDelta_data();
-    void extendedDelta();
-
-    void secret();
-    void separated();
-
-    void deleteResource();
-    void post();
-    void put();
-
-    void jsonMessage();
-
-    void largeDownload();
-    void largeCreate();
-    void largeUpdate();
-
+    QByteArray m_data;
+    QList<CoreLink> m_links;
 };
 
-#endif // COAPTESTS_H
+#endif // COREPARSER_H

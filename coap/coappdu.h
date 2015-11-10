@@ -71,7 +71,7 @@ public:
         Valid                    = 0x43,  // 2.03
         Changed                  = 0x44,  // 2.04
         Content                  = 0x45,  // 2.05
-        Continue                 = 0x95,  // 2.31 (Block)
+        Continue                 = 0x5f,  // 2.31 (Block)
         BadRequest               = 0x80,  // 4.00
         Unauthorized             = 0x81,  // 4.01
         BadOption                = 0x82,  // 4.02
@@ -144,7 +144,8 @@ public:
     void addOption(const CoapOption::Option &option, const QByteArray &data);
 
     CoapPduBlock block() const;
-    bool isBlock() const;
+
+    bool hasOption(const CoapOption::Option &option) const;
 
     void clear();
     bool isValid() const;
@@ -163,7 +164,6 @@ private:
     QList<CoapOption> m_options;
 
     CoapPduBlock m_block;
-    bool m_isBlock;
 
     Error m_error;
 

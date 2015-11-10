@@ -78,6 +78,12 @@ QDebug operator<<(QDebug debug, const CoapOption &coapOption)
         debug.nospace() << "CoapOption(" << optionEnum.valueToKey(coapOption.option()) << "): " << contentEnum.valueToKey(static_cast<CoapPdu::ContentType>(coapOption.data().toHex().toInt(0, 16))) << endl;
         break;
     }
+    case CoapOption::Block1: {
+        // SZX = size exponent
+        CoapPduBlock block(coapOption.data());
+        debug.nospace() << "CoapOption(" << optionEnum.valueToKey(coapOption.option()) << "): " << coapOption.data().toHex() << " Block #" << block.blockNumber() << ", More flag = " << block.moreFlag() << ", SZX:" << block.blockSize() << endl;
+        break;
+    }
     case CoapOption::Block2: {
         // SZX = size exponent
         CoapPduBlock block(coapOption.data());
@@ -95,5 +101,5 @@ QDebug operator<<(QDebug debug, const CoapOption &coapOption)
         break;
     }
 
-    return debug;
+    return debug.space();
 }

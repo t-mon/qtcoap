@@ -47,7 +47,7 @@ QByteArray CoapPduBlock::createBlock(const int &blockNumber, const int &blockSiz
         block |= (quint8)moreFlag << 3;
         block |= (quint8)blockNumber << 4;
         blockData = QByteArray(1, (char)block);
-    } else if (blockNumber < 256) {
+    } else {
         quint16 block = (quint16)blockSize;
         block |= (quint16)moreFlag << 3;
         block |= (quint8)blockNumber << 4;

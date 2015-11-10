@@ -20,6 +20,7 @@
 
 #include "core.h"
 #include "coaprequest.h"
+#include "corelinkparser.h"
 
 Core::Core(QObject *parent) :
     QObject(parent)
@@ -29,8 +30,7 @@ Core::Core(QObject *parent) :
     connect(m_coap, &Coap::replyFinished, this, &Core::onReplyFinished);
 
     // request data
-    CoapRequest request(QUrl("coap://coap.me/hello"));
-    request.setContentType(CoapPdu::ApplicationLink);
+    CoapRequest request(QUrl("coap://coap.me:5683/.well-known/core"));
     qDebug() << request.url().toString();
 
     CoapReply *reply = m_coap->get(request);
@@ -54,8 +54,15 @@ void Core::onReplyFinished(CoapReply *reply)
     qDebug() << "---------------------------------------";
     if (reply->error() != CoapReply::NoError) {
         qDebug() << "Reply finished with error" << reply->errorString();
+        reply->deleteLater();
+        return;
     } else {
         qDebug() << reply;
+    }
+
+    CoreLinkParser parser(reply->payload());
+    foreach (const CoreLink &link, parser.links()) {
+        qDebug() << link;
     }
 
     // Note: please don't forget to delete the reply

@@ -9,8 +9,8 @@ CONFIG += testcase c++11
 
 QT += testlib network
 
-INCLUDEPATH += ../libcoap
-LIBS += -L../libcoap/ -lcoap
+INCLUDEPATH += ../coap
+LIBS += -L../libqtcoap/ -lqtcoap
 
 SOURCES += \
     coaptests.cpp

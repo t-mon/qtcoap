@@ -25,6 +25,34 @@
 CoapTests::CoapTests(QObject *parent) : QObject(parent)
 {
     m_coap = new Coap(this);
+    m_uploadData = QByteArray("                   GNU GENERAL PUBLIC LICENSE \n"
+                              "                    Version 3, 29 June 2007 \n"
+                              "\n"
+                              "Copyright (C) 2007 Free Software Foundation, Inc. <http://fsf.org/>\n"
+                              "Everyone is permitted to copy and distribute verbatim copies\n"
+                              "of this license document, but changing it is not allowed.\n"
+                              "\n"
+                              "                         Preamble\n"
+                              "\n"
+                              "The GNU General Public License is a free, copyleft license for\n"
+                              "software and other kinds of works.\n"
+                              "\n"
+                              "The licenses for most software and other practical works are designed\n"
+                              "to take away your freedom to share and change the works.  By contrast,\n"
+                              "the GNU General Public License is intended to guarantee your freedom to\n"
+                              "share and change all versions of a program--to make sure it remains free\n"
+                              "software for all its users.  We, the Free Software Foundation, use the\n"
+                              "GNU General Public License for most of our software; it applies also to\n"
+                              "any other work released this way by its authors.  You can apply it to\n"
+                              "your programs, too.\n"
+                              "\n"
+                              "When we speak of free software, we are referring to freedom, not\n"
+                              "price.  Our General Public Licenses are designed to make sure that you\n"
+                              "have the freedom to distribute copies of free software (and charge for\n"
+                              "them if you wish), that you receive source code or can get it if you\n"
+                              "want it, that you can change the software or use pieces of it in new\n"
+                              "free programs, and that you know you can do these things.");
+
 }
 
 void CoapTests::invalidUrl_data()
@@ -389,7 +417,7 @@ void CoapTests::largeDownload()
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
     CoapReply *reply = m_coap->get(request);
-    spy.wait();
+    spy.wait(20000);
 
     qDebug() << "====================================";
     qDebug() << reply;
@@ -400,6 +428,86 @@ void CoapTests::largeDownload()
     QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
     QCOMPARE(reply->error(), CoapReply::NoError);
     QVERIFY2(reply->payload().size() == 1700, "Invalid payload size.");
+
+    reply->deleteLater();
+}
+
+void CoapTests::largeCreate()
+{
+    CoapRequest request(QUrl("coap://coap.me:5683/large-create"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+
+    CoapReply *reply = m_coap->post(request, m_uploadData);
+    spy.wait(20000);
+
+    qDebug() << "====================================";
+    qDebug() << reply;
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Created);
+    QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+
+    // clean up
+    reply->deleteLater();
+    spy.clear();
+
+    // check if the upload was realy successfull
+    reply = m_coap->get(request);
+    spy.wait(20000);
+
+    qDebug() << "====================================";
+    qDebug() << reply;
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    QCOMPARE(reply->payload(), m_uploadData);
+
+    reply->deleteLater();
+}
+
+void CoapTests::largeUpdate()
+{
+    CoapRequest request(QUrl("coap://coap.me:5683/large-update"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+
+    CoapReply *reply = m_coap->put(request, m_uploadData);
+    spy.wait(20000);
+
+    qDebug() << "====================================";
+    qDebug() << reply;
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Changed);
+    QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+
+    // clean up
+    reply->deleteLater();
+    spy.clear();
+
+    // check if the upload was successfull
+    reply = m_coap->get(request);
+    spy.wait(20000);
+
+    qDebug() << "====================================";
+    qDebug() << reply;
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->contentType(), CoapPdu::TextPlain);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    QCOMPARE(reply->payload(), m_uploadData);
 
     reply->deleteLater();
 }

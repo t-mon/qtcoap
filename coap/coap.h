@@ -42,7 +42,7 @@ class Coap : public QObject
     Q_OBJECT
 
 public:
-    explicit Coap(QObject *parent = 0);
+    explicit Coap(QObject *parent = 0, const quint16 &port = 5683);
 
     CoapReply *ping(const CoapRequest &request);
     CoapReply *get(const CoapRequest &request);
@@ -62,6 +62,11 @@ private:
     void sendCoapPdu(const QHostAddress &hostAddress, const quint16 &port, const CoapPdu &pdu);
 
     void processResponse(const CoapPdu &pdu);
+    void processIdBasedResponse(CoapReply *reply, const CoapPdu &pdu);
+    void processTokenBasedResponse(CoapReply *reply, const CoapPdu &pdu);
+
+    void processBlock1Response(CoapReply *reply, const CoapPdu &pdu);
+    void processBlock2Response(CoapReply *reply, const CoapPdu &pdu);
 
 signals:
     void replyFinished(CoapReply *reply);
