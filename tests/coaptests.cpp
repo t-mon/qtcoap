@@ -541,4 +541,28 @@ void CoapTests::multipleCalls()
     qDeleteAll(replies);
 }
 
+void CoapTests::coreLinkParser()
+{
+    CoapRequest request(QUrl("coap://coap.me/.well-known/core"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+    CoapReply *reply = m_coap->get(request);
+    spy.wait();
+
+    qDebug() << "====================================";
+    qDebug() << reply;
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->contentType(), CoapPdu::ApplicationLink);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+
+    CoreLinkParser parser(reply->payload());
+    QCOMPARE(parser.links().count(), 28);
+
+    reply->deleteLater();
+}
+
 QTEST_MAIN(CoapTests)

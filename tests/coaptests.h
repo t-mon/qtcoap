@@ -32,6 +32,7 @@
 #include "coap.h"
 #include "coappdu.h"
 #include "coapreply.h"
+#include "corelinkparser.h"
 
 class CoapTests : public QObject
 {
@@ -77,6 +78,7 @@ private slots:
 
     void multipleCalls();
 
+    void coreLinkParser();
 
 };
 
