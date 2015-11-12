@@ -7,6 +7,7 @@ The QtCoap lib allowes you communicate with a CoAP server according to the [RFC7
 =====================================================================
 ## Features
 
+* Queue for nonblocking multiple requests (FIFO)
 * DNS resolving for URLs
 * GET, PUT, POST, DELETE methods
 * Piggybacked requests
@@ -19,7 +20,6 @@ The QtCoap lib allowes you communicate with a CoAP server according to the [RFC7
 
 TODO:
 * Observing resources
-* Provide a server class
 
 =====================================================================
 ## Use QtCoap in your project

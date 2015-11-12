@@ -25,16 +25,17 @@
 #include <QHostInfo>
 #include <QUdpSocket>
 #include <QHostAddress>
+#include <QQueue>
 
 #include "coaprequest.h"
 #include "coapreply.h"
 
 /* Information about CoAP
  *
- * The Constrained Application Protocol (CoAP)          : https://tools.ietf.org/html/rfc7252
- * Blockwise transfers in CoAP                          : https://tools.ietf.org/html/draft-ietf-core-block-18
- * Constrained RESTful Environments (CoRE) Link Format  : http://tools.ietf.org/html/rfc6690
- * Observing Resources in CoAP                          : https://tools.ietf.org/html/rfc7641
+ * The Constrained Application Protocol (CoAP)         : https://tools.ietf.org/html/rfc7252
+ * Blockwise transfers in CoAP                         : https://tools.ietf.org/html/draft-ietf-core-block-18
+ * Constrained RESTful Environments (CoRE) Link Format : http://tools.ietf.org/html/rfc6690
+ * Observing Resources in CoAP                         : https://tools.ietf.org/html/rfc7641
  */
 
 class Coap : public QObject
@@ -52,11 +53,13 @@ public:
 
 private:
     QUdpSocket *m_socket;
+
+    CoapReply *m_reply;
     QHash<int, CoapReply *> m_runningHostLookups;
 
-    QHash<int, CoapReply *> m_repliesId;
-    QHash<QByteArray, CoapReply *> m_repliesToken;
+    QQueue<CoapReply *> m_replyQueue;
 
+    void lookupHost();
     void sendRequest(CoapReply *reply, const bool &lookedUp = false);
     void sendData(const QHostAddress &hostAddress, const quint16 &port, const QByteArray &data);
     void sendCoapPdu(const QHostAddress &hostAddress, const quint16 &port, const CoapPdu &pdu);

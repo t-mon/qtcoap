@@ -100,12 +100,20 @@ private:
     void setRequestData(const QByteArray &requestData);
     QByteArray requestData() const;
 
+    int messageId() const;
+    void setMessageId(const int &messageId);
+
+    QByteArray messageToken() const;
+    void setMessageToken(const QByteArray &messageToken);
+
     QHostAddress m_hostAddress;
     int m_port;
     CoapPdu::StatusCode m_requestMethod;
     QByteArray m_requestPayload;
     QByteArray m_requestData;
     bool m_lockedUp;
+    int m_messageId;
+    QByteArray m_messageToken;
 
 signals:
     void timeout();

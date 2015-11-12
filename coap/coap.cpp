@@ -23,7 +23,8 @@
 #include "coapoption.h"
 
 Coap::Coap(QObject *parent, const quint16 &port) :
-    QObject(parent)
+    QObject(parent),
+    m_reply(0)
 {
     m_socket = new QUdpSocket(this);
 
@@ -47,8 +48,14 @@ CoapReply *Coap::ping(const CoapRequest &request)
         return reply;
     }
 
-    int lookupId = QHostInfo::lookupHost(request.url().host(), this, SLOT(hostLookupFinished(QHostInfo)));
-    m_runningHostLookups.insert(lookupId, reply);
+    // check if there is a request running
+    if (m_reply == 0) {
+        m_reply = reply;
+        lookupHost();
+    } else {
+        m_replyQueue.enqueue(reply);
+    }
+
     return reply;
 }
 
@@ -66,8 +73,14 @@ CoapReply *Coap::get(const CoapRequest &request)
         return reply;
     }
 
-    int lookupId = QHostInfo::lookupHost(request.url().host(), this, SLOT(hostLookupFinished(QHostInfo)));
-    m_runningHostLookups.insert(lookupId, reply);
+    // check if there is a request running
+    if (m_reply == 0) {
+        m_reply = reply;
+        lookupHost();
+    } else {
+        m_replyQueue.enqueue(reply);
+    }
+
     return reply;
 }
 
@@ -86,8 +99,14 @@ CoapReply *Coap::put(const CoapRequest &request, const QByteArray &data)
         return reply;
     }
 
-    int lookupId = QHostInfo::lookupHost(request.url().host(), this, SLOT(hostLookupFinished(QHostInfo)));
-    m_runningHostLookups.insert(lookupId, reply);
+    // check if there is a request running
+    if (m_reply == 0) {
+        m_reply = reply;
+        lookupHost();
+    } else {
+        m_replyQueue.enqueue(reply);
+    }
+
     return reply;
 }
 
@@ -106,8 +125,14 @@ CoapReply *Coap::post(const CoapRequest &request, const QByteArray &data)
         return reply;
     }
 
-    int lookupId = QHostInfo::lookupHost(request.url().host(), this, SLOT(hostLookupFinished(QHostInfo)));
-    m_runningHostLookups.insert(lookupId, reply);
+    // check if there is a request running
+    if (m_reply == 0) {
+        m_reply = reply;
+        lookupHost();
+    } else {
+        m_replyQueue.enqueue(reply);
+    }
+
     return reply;
 }
 
@@ -125,9 +150,21 @@ CoapReply *Coap::deleteResource(const CoapRequest &request)
         return reply;
     }
 
-    int lookupId = QHostInfo::lookupHost(request.url().host(), this, SLOT(hostLookupFinished(QHostInfo)));
-    m_runningHostLookups.insert(lookupId, reply);
+    // check if there is a request running
+    if (m_reply == 0) {
+        m_reply = reply;
+        lookupHost();
+    } else {
+        m_replyQueue.enqueue(reply);
+    }
+
     return reply;
+}
+
+void Coap::lookupHost()
+{
+    int lookupId = QHostInfo::lookupHost(m_reply->request().url().host(), this, SLOT(hostLookupFinished(QHostInfo)));
+    m_runningHostLookups.insert(lookupId, m_reply);
 }
 
 void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
@@ -167,6 +204,8 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
 
     QByteArray pduData = pdu.pack();
     reply->setRequestData(pduData);
+    reply->setMessageId(pdu.messageId());
+    reply->setMessageToken(pdu.token());
     reply->m_lockedUp = lookedUp;
     reply->m_timer->start();
 
@@ -177,8 +216,6 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
         sendData(reply->hostAddress(), reply->port(), pduData);
         reply->setFinished();
     } else {
-        m_repliesId.insert(pdu.messageId(), reply);
-        m_repliesToken.insert(pdu.token(), reply);
         sendData(reply->hostAddress(), reply->port(), pduData);
     }
 }
@@ -198,24 +235,22 @@ void Coap::processResponse(const CoapPdu &pdu)
 {
     qDebug() << "<---" << pdu;
 
-    CoapReply *reply = m_repliesId.take(pdu.messageId());
     if (!pdu.isValid()) {
         qWarning() << "Got invalid PDU";
-        reply->setError(CoapReply::InvalidPduError);
-        reply->setFinished();
+        m_reply->setError(CoapReply::InvalidPduError);
+        m_reply->setFinished();
         return;
     }
 
     // check if the message is a response to a reply (message id based check)
-    if (reply) {
-        processIdBasedResponse(reply, pdu);
+    if (m_reply->messageId() == pdu.messageId()) {
+        processIdBasedResponse(m_reply, pdu);
         return;
     }
 
     // check if we know the message by token (message token based check)
-    reply = m_repliesToken.take(pdu.token());
-    if (reply) {
-        processTokenBasedResponse(reply, pdu);
+    if (m_reply->messageToken() == pdu.token()) {
+        processTokenBasedResponse(m_reply, pdu);
         return;
     }
 
@@ -244,7 +279,6 @@ void Coap::processIdBasedResponse(CoapReply *reply, const CoapPdu &pdu)
     }
 
     // Piggybacked response
-    m_repliesToken.remove(pdu.token());
     reply->setStatusCode(pdu.statusCode());
     reply->setContentType(pdu.contentType());
     reply->appendPayloadData(pdu.payload());
@@ -318,7 +352,7 @@ void Coap::processBlock1Response(CoapReply *reply, const CoapPdu &pdu)
     reply->m_timer->start();
     reply->m_retransmissions = 1;
 
-    m_repliesId.insert(nextBlockRequest.messageId(), reply);
+    reply->setMessageId(nextBlockRequest.messageId());
 
     qDebug() << "--->" << nextBlockRequest;
     sendData(reply->hostAddress(), reply->port(), pduData);
@@ -330,7 +364,6 @@ void Coap::processBlock2Response(CoapReply *reply, const CoapPdu &pdu)
 
     // check if this was the last block
     if (!pdu.block().moreFlag()) {
-        qDebug() << "Block finished";
         reply->setStatusCode(pdu.statusCode());
         reply->setContentType(pdu.contentType());
         reply->setFinished();
@@ -366,7 +399,7 @@ void Coap::processBlock2Response(CoapReply *reply, const CoapPdu &pdu)
     reply->setRequestData(pduData);
     reply->m_timer->start();
 
-    m_repliesId.insert(nextBlockRequest.messageId(), reply);
+    reply->setMessageId(nextBlockRequest.messageId());
 
     qDebug() << "--->" << nextBlockRequest;
     sendData(reply->hostAddress(), reply->port(), pduData);
@@ -377,7 +410,6 @@ void Coap::hostLookupFinished(const QHostInfo &hostInfo)
     CoapReply *reply = m_runningHostLookups.take(hostInfo.lookupId());;
     reply->setPort(reply->request().url().port(5683));
 
-
     if (hostInfo.error() != QHostInfo::NoError) {
         qDebug() << "Host lookup for" << reply->request().url().host() << "failed:" << hostInfo.errorString();
         reply->setError(CoapReply::HostNotFoundError);
@@ -385,13 +417,7 @@ void Coap::hostLookupFinished(const QHostInfo &hostInfo)
         return;
     }
 
-    QHostAddress hostAddress;
-    foreach (const QHostAddress &address, hostInfo.addresses()) {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol) {
-            hostAddress = address;
-            break;
-        }
-    }
+    QHostAddress hostAddress = hostInfo.addresses().first();
     reply->setHostAddress(hostAddress);
 
     // check if the url had to be looked up
@@ -431,5 +457,17 @@ void Coap::onReplyTimeout()
 void Coap::onReplyFinished()
 {
     CoapReply *reply = qobject_cast<CoapReply *>(sender());
+
+    if (reply != m_reply)
+        qWarning() << "This should never happen!! Please report a bug if you get this message!";
+
     emit replyFinished(reply);
+
+    m_reply = 0;
+    // check if there is a request in the queue
+    if (!m_replyQueue.isEmpty()) {
+        m_reply = m_replyQueue.dequeue();
+        if (m_reply)
+            lookupHost();
+    }
 }

@@ -39,7 +39,13 @@ public:
 private:
     Coap *m_coap;
 
-    QList<CoapReply *> m_replies;
+    CoapReply *m_pingReply;
+    CoapReply *m_helloReply;
+    CoapReply *m_separatedReply;
+
+    void ping();
+    void hello();
+    void separated();
 
 private slots:
     void onReplyFinished(CoapReply *reply);

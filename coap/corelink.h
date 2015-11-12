@@ -34,24 +34,34 @@ public:
     QString path() const;
     void setPath(const QString &path);
 
+    // link params
+    QString title() const;
+    void setTitle(const QString &title);
+
     QString resourceType() const;
     void setResourceType(const QString &resourceType);
 
     QString interfaceDescription() const;
     void setInterfaceDescription(const QString &interfaceDescription);
 
-    int maximumSize() const;
-    void setMaximumSize(const int &maximumSize);
-
     CoapPdu::ContentType contentType() const;
     void setContentType(const CoapPdu::ContentType &contentType);
 
+    int maximumSize() const;
+    void setMaximumSize(const int &maximumSize);
+
+    bool observable() const;
+    void setObservable(const bool &observable);
+
 private:
     QString m_path;
+
+    QString m_title;
     QString m_resourceType;
     QString m_interfaceDescription;
-    int m_maximumSize;
     CoapPdu::ContentType m_contentType;
+    int m_maximumSize;
+    bool m_observable;
 
 };
 

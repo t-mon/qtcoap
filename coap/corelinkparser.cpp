@@ -27,13 +27,15 @@ CoreLinkParser::CoreLinkParser(const QByteArray &data, QObject *parent) :
     m_data(data)
 {
     QList<QByteArray> linkList = data.split(',');
-
     foreach (const QByteArray &linkLine, linkList) {
+        qDebug() << "-------------------------------------";
+        qDebug() << linkLine;
         QList<QByteArray> valueList = linkLine.split(';');
         CoreLink link;
         foreach (const QByteArray &value, valueList) {
-            if (value.startsWith("</")) {
-                link.setPath(QString(value.mid(2, value.length()-3)));
+            qDebug() << value;
+            if (value.startsWith("<")) {
+                link.setPath(QString(value.mid(1, value.length() - 2)));
             } else if (value.startsWith("rt=")) {
                 link.setResourceType(QString(value.right(value.length() - 3)).remove('"'));
             } else if (value.startsWith("if=")) {
@@ -42,8 +44,13 @@ CoreLinkParser::CoreLinkParser(const QByteArray &data, QObject *parent) :
                 link.setMaximumSize(value.right(value.length() - 3).toInt());
             } else if (value.startsWith("ct=")) {
                 link.setContentType(static_cast<CoapPdu::ContentType>(value.right(value.length() - 3).toUInt()));
+            } else if (value.startsWith("title=")) {
+                link.setTitle(QString(value.right(value.length() - 6)).remove('"'));
+            } else if (value == "obs") {
+                link.setObservable(true);
             }
         }
+        qDebug() << endl << link;
         m_links.append(link);
     }
 }

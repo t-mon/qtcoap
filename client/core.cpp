@@ -22,6 +22,8 @@
 #include "coaprequest.h"
 #include "corelinkparser.h"
 
+#include <QDebug>
+
 Core::Core(QObject *parent) :
     QObject(parent)
 {
@@ -29,23 +31,74 @@ Core::Core(QObject *parent) :
     m_coap = new Coap(this);
     connect(m_coap, &Coap::replyFinished, this, &Core::onReplyFinished);
 
+    ping();
+    separated();
+    hello();
+}
+
+void Core::ping()
+{
     // request data
-    CoapRequest request(QUrl("coap://coap.me:5683/.well-known/core"));
+    CoapRequest request(QUrl("coap://coap.me/"));
     qDebug() << request.url().toString();
 
-    CoapReply *reply = m_coap->get(request);
+    m_pingReply = m_coap->ping(request);
 
     // check if the reply is allready finished (error case or for NonConfirmable reply)
-    if (reply->isFinished()) {
+    if (m_pingReply->isFinished()) {
         qDebug() << "---------------------------------------";
-        if (reply->error() != CoapReply::NoError) {
-            qDebug() << "Reply finished with error" << reply->errorString();
+        if (m_pingReply->error() != CoapReply::NoError) {
+            qDebug() << "Reply finished with error" << m_pingReply->errorString();
         } else {
             qDebug() << "Reply finished";
         }
 
         // Note: please don't forget to delete the reply
-        reply->deleteLater();
+        m_pingReply->deleteLater();
+    }
+}
+
+void Core::hello()
+{
+    // request data
+    CoapRequest request(QUrl("coap://coap.me/hello"));
+    qDebug() << request.url().toString();
+
+    m_helloReply = m_coap->get(request);
+
+    // check if the reply is allready finished (error case or for NonConfirmable reply)
+    if (m_helloReply->isFinished()) {
+        qDebug() << "---------------------------------------";
+        if (m_helloReply->error() != CoapReply::NoError) {
+            qDebug() << "Reply finished with error" << m_helloReply->errorString();
+        } else {
+            qDebug() << "Reply finished";
+        }
+
+        // Note: please don't forget to delete the reply
+        m_helloReply->deleteLater();
+    }
+}
+
+void Core::separated()
+{
+    // request data
+    CoapRequest request(QUrl("coap://coap.me/separate"));
+    qDebug() << request.url().toString();
+
+    m_separatedReply = m_coap->get(request);
+
+    // check if the reply is allready finished (error case or for NonConfirmable reply)
+    if (m_separatedReply->isFinished()) {
+        qDebug() << "---------------------------------------";
+        if (m_separatedReply->error() != CoapReply::NoError) {
+            qDebug() << "Reply finished with error" << m_separatedReply->errorString();
+        } else {
+            qDebug() << "Reply finished";
+        }
+
+        // Note: please don't forget to delete the reply
+        m_separatedReply->deleteLater();
     }
 }
 
@@ -56,13 +109,23 @@ void Core::onReplyFinished(CoapReply *reply)
         qDebug() << "Reply finished with error" << reply->errorString();
         reply->deleteLater();
         return;
-    } else {
-        qDebug() << reply;
     }
 
-    CoreLinkParser parser(reply->payload());
-    foreach (const CoreLink &link, parser.links()) {
-        qDebug() << link;
+    if (reply == m_pingReply) {
+        qDebug() << "Reply finished:";
+        qDebug() << m_pingReply;
+        qDebug() << "Pong!";
+        qDebug() << "=======================================";
+    } else if (reply == m_helloReply) {
+        qDebug() << "Reply finished:";
+        qDebug() << m_helloReply;
+        qDebug() << "Server says ->" << m_helloReply->payload();
+        qDebug() << "=======================================";
+    } else if (reply == m_separatedReply) {
+        qDebug() << "Reply finished:";
+        qDebug() << m_separatedReply;
+        qDebug() << "Separated finished";
+        qDebug() << "=======================================";
     }
 
     // Note: please don't forget to delete the reply

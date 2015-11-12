@@ -75,6 +75,9 @@ private slots:
     void largeCreate();
     void largeUpdate();
 
+    void multipleCalls();
+
+
 };
 
 #endif // COAPTESTS_H

@@ -512,4 +512,33 @@ void CoapTests::largeUpdate()
     reply->deleteLater();
 }
 
+void CoapTests::multipleCalls()
+{
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+
+    QList<CoapReply *> replies;
+
+    replies.append(m_coap->get(CoapRequest(QUrl("coap://coap.me:5683/separate"))));
+    replies.append(m_coap->ping(CoapRequest(QUrl("coap://coap.me"))));
+    replies.append(m_coap->get(CoapRequest(QUrl("coap://coap.me:5683/large"))));
+    replies.append(m_coap->get(CoapRequest(QUrl("coap://coap.me"))));
+    spy.wait(10000);
+    spy.wait();
+    spy.wait(10000);
+    spy.wait();
+
+    QVERIFY2(spy.count() == 4, "Did not get all responses.");
+    spy.clear();
+
+    foreach (CoapReply *reply, replies) {
+        qDebug() << "====================================";
+        qDebug() << reply;
+        QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+        QCOMPARE(reply->error(), CoapReply::NoError);
+        reply->deleteLater();
+    }
+
+    qDeleteAll(replies);
+}
+
 QTEST_MAIN(CoapTests)

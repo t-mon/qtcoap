@@ -110,6 +110,26 @@ QByteArray CoapReply::requestData() const
     return m_requestData;
 }
 
+int CoapReply::messageId() const
+{
+    return m_messageId;
+}
+
+void CoapReply::setMessageId(const int &messageId)
+{
+    m_messageId = messageId;
+}
+
+QByteArray CoapReply::messageToken() const
+{
+    return m_messageToken;
+}
+
+void CoapReply::setMessageToken(const QByteArray &messageToken)
+{
+    m_messageToken = messageToken;
+}
+
 void CoapReply::setFinished()
 {
     m_isFinished = true;
