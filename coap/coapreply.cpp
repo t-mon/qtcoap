@@ -96,7 +96,9 @@ CoapReply::CoapReply(const CoapRequest &request, QObject *parent) :
     m_contentType(CoapPdu::TextPlain),
     m_messageType(CoapPdu::Acknowledgement),
     m_statusCode(CoapPdu::Empty),
-    m_lockedUp(false)
+    m_lockedUp(false),
+    m_observation(false),
+    m_observationEnable(false)
 {
     m_timer = new QTimer(this);
     m_timer->setSingleShot(false);
@@ -128,6 +130,26 @@ QByteArray CoapReply::messageToken() const
 void CoapReply::setMessageToken(const QByteArray &messageToken)
 {
     m_messageToken = messageToken;
+}
+
+bool CoapReply::observation() const
+{
+    return m_observation;
+}
+
+void CoapReply::setObservation(const bool &observation)
+{
+    m_observation = observation;
+}
+
+bool CoapReply::observationEnable() const
+{
+    return m_observationEnable;
+}
+
+void CoapReply::setObservationEnable(const bool &observationEnable)
+{
+    m_observationEnable = observationEnable;
 }
 
 void CoapReply::setFinished()

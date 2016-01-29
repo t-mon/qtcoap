@@ -402,7 +402,7 @@ QDebug operator<<(QDebug debug, const CoapPdu &coapPdu)
     debug.nospace() << "  Message ID: " << coapPdu.messageId() << endl;
     debug.nospace() << "  Payload size: " << coapPdu.payload().size() << endl;
     foreach (const CoapOption &option, coapPdu.options()) {
-        debug.nospace() << "  " << option;
+        debug.nospace() << "    " << option;
     }
 
     if (!coapPdu.payload().isEmpty())

@@ -18,57 +18,15 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAPOPTION_H
-#define COAPOPTION_H
+#include <QCoreApplication>
+#include "core.h"
 
-#include <QDebug>
-#include <QObject>
-#include <QByteArray>
-
-class CoapOption
+int main(int argc, char *argv[])
 {
-    Q_GADGET
-    Q_ENUMS(Option)
+    QCoreApplication a(argc, argv);
 
-public:
-    // Options format: https://tools.ietf.org/html/rfc7252#section-3.1
-    enum Option {
-        IfMatch       = 1,
-        UriHost       = 3,
-        ETag          = 4,
-        IfNoneMatch   = 5,
-        Observe       = 6, // (Observe) https://tools.ietf.org/html/rfc7641
-        UriPort       = 7,
-        LocationPath  = 8,
-        UriPath       = 11,
-        ContentFormat = 12,
-        MaxAge        = 14,
-        UriQuery      = 15,
-        Accept        = 17,
-        LocationQuery = 20,
-        Block2        = 23, // (Block) https://tools.ietf.org/html/draft-ietf-core-block-18
-        Block1        = 27, // (Block)
-        ProxyUri      = 35,
-        ProxyScheme   = 39,
-        Size1         = 60
-    };
+    Core core;
 
-    CoapOption();
-    CoapOption(const Option &option, const QByteArray &data);
+    return a.exec();
+}
 
-    void setOption(const Option &option);
-    Option option() const;
-
-    void setData(const QByteArray &data);
-    QByteArray data() const;
-
-private:
-    Option m_option;
-    QByteArray m_data;
-};
-
-Q_DECLARE_METATYPE(CoapOption)
-
-QDebug operator<<(QDebug debug, const CoapOption &coapOption);
-
-#endif // COAPOPTION_H

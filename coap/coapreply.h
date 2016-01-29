@@ -106,6 +106,12 @@ private:
     QByteArray messageToken() const;
     void setMessageToken(const QByteArray &messageToken);
 
+    bool observation() const;
+    void setObservation(const bool &observation);
+
+    bool observationEnable() const;
+    void setObservationEnable(const bool &observationEnable);
+
     QHostAddress m_hostAddress;
     int m_port;
     CoapPdu::StatusCode m_requestMethod;
@@ -114,6 +120,9 @@ private:
     bool m_lockedUp;
     int m_messageId;
     QByteArray m_messageToken;
+
+    bool m_observation;
+    bool m_observationEnable;
 
 signals:
     void timeout();

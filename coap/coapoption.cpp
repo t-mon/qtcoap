@@ -91,6 +91,10 @@ QDebug operator<<(QDebug debug, const CoapOption &coapOption)
         break;
     }
 
+    case CoapOption::Observe: {
+        debug.nospace() << "CoapOption(" << optionEnum.valueToKey(coapOption.option()) << "): " << coapOption.data().toHex().toInt(0, 16) << endl;
+        break;
+    }
     default:
         QString optionName = optionEnum.valueToKey(coapOption.option());
         if (optionName.isNull()) {

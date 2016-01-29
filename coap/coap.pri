@@ -11,7 +11,8 @@ SOURCES += \
     $$PWD/coapreply.cpp \
     $$PWD/coappdublock.cpp \
     $$PWD/corelinkparser.cpp \
-    $$PWD/corelink.cpp
+    $$PWD/corelink.cpp \
+    $$PWD/coapobserveresource.cpp
 
 HEADERS += \
     $$PWD/coap.h \
@@ -21,4 +22,5 @@ HEADERS += \
     $$PWD/coapreply.h \
     $$PWD/coappdublock.h \
     $$PWD/corelinkparser.h \
-    $$PWD/corelink.h
+    $$PWD/corelink.h \
+    $$PWD/coapobserveresource.h

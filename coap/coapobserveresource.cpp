@@ -18,57 +18,30 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAPOPTION_H
-#define COAPOPTION_H
+#include "coapobserveresource.h"
 
-#include <QDebug>
-#include <QObject>
-#include <QByteArray>
-
-class CoapOption
+CoapObserveResource::CoapObserveResource()
 {
-    Q_GADGET
-    Q_ENUMS(Option)
+}
 
-public:
-    // Options format: https://tools.ietf.org/html/rfc7252#section-3.1
-    enum Option {
-        IfMatch       = 1,
-        UriHost       = 3,
-        ETag          = 4,
-        IfNoneMatch   = 5,
-        Observe       = 6, // (Observe) https://tools.ietf.org/html/rfc7641
-        UriPort       = 7,
-        LocationPath  = 8,
-        UriPath       = 11,
-        ContentFormat = 12,
-        MaxAge        = 14,
-        UriQuery      = 15,
-        Accept        = 17,
-        LocationQuery = 20,
-        Block2        = 23, // (Block) https://tools.ietf.org/html/draft-ietf-core-block-18
-        Block1        = 27, // (Block)
-        ProxyUri      = 35,
-        ProxyScheme   = 39,
-        Size1         = 60
-    };
+CoapObserveResource::CoapObserveResource(const QUrl &url, const QByteArray &token):
+    m_url(url),
+    m_token(token)
+{
+}
 
-    CoapOption();
-    CoapOption(const Option &option, const QByteArray &data);
+CoapObserveResource::CoapObserveResource(const CoapObserveResource &other)
+{
+    m_url = other.url();
+    m_token = other.token();
+}
 
-    void setOption(const Option &option);
-    Option option() const;
+QUrl CoapObserveResource::url() const
+{
+    return m_url;
+}
 
-    void setData(const QByteArray &data);
-    QByteArray data() const;
-
-private:
-    Option m_option;
-    QByteArray m_data;
-};
-
-Q_DECLARE_METATYPE(CoapOption)
-
-QDebug operator<<(QDebug debug, const CoapOption &coapOption);
-
-#endif // COAPOPTION_H
+QByteArray CoapObserveResource::token() const
+{
+    return m_token;
+}
