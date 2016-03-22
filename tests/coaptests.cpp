@@ -55,11 +55,67 @@ CoapTests::CoapTests(QObject *parent) : QObject(parent)
 
 }
 
+
+void CoapTests::observeResource()
+{
+    CoapRequest request(QUrl("coap://vs0.inf.ethz.ch/obs"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+    QSignalSpy notificationSpy(m_coap, SIGNAL(notificationReceived(CoapObserveResource,int,QByteArray)));
+
+    CoapReply *reply = m_coap->enableResourceNotifications(request);
+    spy.wait();
+
+    qDebug() << "====================================";
+    qDebug() << reply;
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    reply->deleteLater();
+
+    notificationSpy.wait(6000);
+    QVERIFY2(notificationSpy.count() > 0, "Did not get a notification.");
+    qDebug() << notificationSpy.first();
+    m_coap->disableNotifications(request);
+    QTest::qWait(5000);
+}
+
+void CoapTests::observeLargeResource()
+{
+    CoapRequest request(QUrl("coap://vs0.inf.ethz.ch/obs-large"));
+    qDebug() << request.url().toString();
+
+    QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
+    QSignalSpy notificationSpy(m_coap, SIGNAL(notificationReceived(CoapObserveResource,int,QByteArray)));
+
+    CoapReply *reply = m_coap->enableResourceNotifications(request);
+    spy.wait();
+
+    qDebug() << "====================================";
+    qDebug() << reply;
+
+    QVERIFY2(spy.count() > 0, "Did not get a response.");
+    QCOMPARE(reply->messageType(), CoapPdu::Acknowledgement);
+    QCOMPARE(reply->statusCode(), CoapPdu::Content);
+    QCOMPARE(reply->error(), CoapReply::NoError);
+    reply->deleteLater();
+
+    notificationSpy.wait(6000);
+    QVERIFY2(notificationSpy.count() > 0, "Did not get a notification.");
+    qDebug() << notificationSpy.first();
+    m_coap->disableNotifications(request);
+    QTest::qWait(5000);
+}
+
+
 void CoapTests::invalidUrl_data()
 {
     QTest::addColumn<QUrl>("url");
 
-    QTest::newRow("missing backslash") << QUrl("coap:/coap.me");
+    QTest::newRow("missing backslash") << QUrl("coap:/coap.me:343434");
     QTest::newRow("invalid host") << QUrl("coap://foo.bar");
 }
 
@@ -564,5 +620,6 @@ void CoapTests::coreLinkParser()
 
     reply->deleteLater();
 }
+
 
 QTEST_MAIN(CoapTests)

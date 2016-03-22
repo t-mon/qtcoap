@@ -33,6 +33,7 @@
 #include "coappdu.h"
 #include "coapreply.h"
 #include "corelinkparser.h"
+#include "coapobserveresource.h"
 
 class CoapTests : public QObject
 {
@@ -46,6 +47,9 @@ private:
     QByteArray m_uploadData;
 
 private slots:
+    void observeResource();
+    void observeLargeResource();
+
     void invalidUrl_data();
     void invalidUrl();
 
@@ -79,6 +83,7 @@ private slots:
     void multipleCalls();
 
     void coreLinkParser();
+
 
 };
 
