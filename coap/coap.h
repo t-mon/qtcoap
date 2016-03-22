@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -25,6 +25,8 @@
 #include <QHostInfo>
 #include <QUdpSocket>
 #include <QHostAddress>
+#include <QLoggingCategory>
+#include <QPointer>
 #include <QQueue>
 
 #include "coaprequest.h"
@@ -40,10 +42,11 @@
  *
  */
 
+Q_DECLARE_LOGGING_CATEGORY(dcCoap)
+
 class Coap : public QObject
 {
     Q_OBJECT
-
 public:
     explicit Coap(QObject *parent = 0, const quint16 &port = 5683);
 
@@ -61,11 +64,18 @@ public:
 private:
     QUdpSocket *m_socket;
 
-    CoapReply *m_reply;
-    QHash<int, CoapReply *> m_runningHostLookups;
-    QHash<QByteArray, CoapObserveResource> m_observeResources;
-
+    QPointer<CoapReply> m_reply;
     QQueue<CoapReply *> m_replyQueue;
+
+
+    QHash<int, CoapReply *> m_runningHostLookups;
+
+    QHash<QByteArray, CoapObserveResource> m_observeResources;          // token | resource
+
+    // Blockwise notifications
+    QPointer<CoapReply> m_observerReply;
+    QHash<CoapReply *, CoapObserveResource> m_observeReplyResource;     // observe reply | resource
+    QHash<CoapReply *, int> m_observeBlockwise;                         // observe reply | observe nr.
 
     void lookupHost();
     void sendRequest(CoapReply *reply, const bool &lookedUp = false);
@@ -80,6 +90,9 @@ private:
 
     void processBlock1Response(CoapReply *reply, const CoapPdu &pdu);
     void processBlock2Response(CoapReply *reply, const CoapPdu &pdu);
+
+    void processBlock2Notification(CoapReply *reply, const CoapPdu &pdu);
+
 
 signals:
     void replyFinished(CoapReply *reply);

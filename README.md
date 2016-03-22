@@ -14,12 +14,10 @@ The QtCoap lib allowes you communicate with a CoAP server according to the [RFC7
 * Separated requests (async)
 * Non-confirmable requests
 * Extended option delta/lenght
+* Blockwise notifications
 * Blockwise transfers [draft-ietf-core-block-18](https://tools.ietf.org/html/draft-ietf-core-block-18)
 * CoRE (Constrained RESTful Environments) link format parser [RFC6690](http://tools.ietf.org/html/rfc6690)
-* Tests using the online CoAP server [coap://coap.me/](http://coap.me/)
-
-TODO:
-* Observing resources
+* Tests using the online CoAP server [coap://coap.me/](http://coap.me/) and [http://vs0.inf.ethz.ch/]
 
 =====================================================================
 ## Use QtCoap in your project

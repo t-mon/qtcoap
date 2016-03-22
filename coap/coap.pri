@@ -3,6 +3,9 @@ QT += network
 QMAKE_CXXFLAGS += -Werror
 CONFIG += c++11
 
+INCLUDEPATH += $$PWD
+DEPENDPATH += $$PWD
+
 SOURCES += \
     $$PWD/coap.cpp \
     $$PWD/coappdu.cpp \

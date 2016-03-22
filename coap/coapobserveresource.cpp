@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -18,29 +18,46 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/*!
+    \class CoapObserveResource
+    \brief Holds information about an observed resource.
+
+    \ingroup coap
+
+    The CoapObserveResource class holds information about an observed resource.
+
+    \sa Coap::notificationReceived()
+
+*/
+
 #include "coapobserveresource.h"
 
+/*! Constructs a CoapObserveResource. */
 CoapObserveResource::CoapObserveResource()
 {
 }
 
+/*! Constructs a CoapObserveResource with the given \a url and \a token. */
 CoapObserveResource::CoapObserveResource(const QUrl &url, const QByteArray &token):
     m_url(url),
     m_token(token)
 {
 }
 
+/*! Constructs a copy of the given \a other \l{CoapObserveResource}. */
 CoapObserveResource::CoapObserveResource(const CoapObserveResource &other)
 {
     m_url = other.url();
     m_token = other.token();
 }
 
+/*! Returns the url of this \l{CoapObserveResource}. */
 QUrl CoapObserveResource::url() const
 {
     return m_url;
 }
 
+/*! Returns the token of this \l{CoapObserveResource}. */
 QByteArray CoapObserveResource::token() const
 {
     return m_token;

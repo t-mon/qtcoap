@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -18,12 +18,142 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/*!
+    \class CoapPdu
+    \brief Represents a CoAP protocol data unit (PDU).
+
+    \ingroup coap
+
+*/
+
+/*! \enum CoapPdu::MessageType
+
+    \value Confirmable
+    \value NonConfirmable
+    \value Acknowledgement
+    \value Reset
+
+*/
+
+/*! \enum CoapPdu::StatusCode
+
+    The CoAP status codes.
+
+    Methods: \l{https://tools.ietf.org/html/rfc7252#section-5.8}
+
+    Status codes: \l{https://tools.ietf.org/html/rfc7252#section-12.1.2}
+
+    \value Empty
+        0.00 Empty (i.e. response to ping request)
+    \value Get
+        The GET method
+    \value Post
+        The POST method
+    \value Put
+        The PUT method
+    \value Delete
+        The DELETE method
+    \value Created
+        2.01 Created
+    \value Deleted
+        2.02 Deleted
+    \value Valid
+        2.03 Valid
+    \value Changed
+        2.04 Changed
+    \value Content
+        2.05 Content
+    \value Continue
+        2.31 Continue (from \l{https://tools.ietf.org/html/draft-ietf-core-block-18}{Blockwise V18})
+    \value BadRequest
+        4.00 Bad Request
+    \value Unauthorized
+        4.01 Unauthorized
+    \value BadOption
+        4.02 Bad Option
+    \value Forbidden
+        4.03 Forbidden
+    \value NotFound
+        4.04 Not Found
+    \value MethodNotAllowed
+        4.05 Method Not Allowed
+    \value NotAcceptable
+        4.06 Not Acceptable
+    \value RequestEntityIncomplete
+        4.08 Request Entity Incomplete (from \l{https://tools.ietf.org/html/draft-ietf-core-block-18}{Blockwise V18})
+    \value PreconditionFailed
+        4.12 Precondition Failed
+    \value RequestEntityTooLarge
+        4.13 Request Entity Too Large (from \l{https://tools.ietf.org/html/draft-ietf-core-block-18}{Blockwise V18})
+    \value UnsupportedContentFormat
+        4.15 UnsupportedContentFormat
+    \value InternalServerError
+        5.00 Internal Server Error
+    \value NotImplemented
+        5.01 Not Implemented
+    \value BadGateway
+        5.02 Bad Gateway
+    \value ServiceUnavailabl
+        5.03 Service Unavailabl
+    \value GatewayTimeout
+        5.04 Gateway Timeout
+    \value ProxyingNotSupported
+        5.05 Proxying Not Supported
+
+*/
+
+/*! \enum CoapPdu::ContentType
+
+    The CoAP content types.
+
+    \value TextPlain
+    \value ApplicationLink
+    \value ApplicationXml
+    \value ApplicationOctet
+    \value ApplicationExi
+    \value ApplicationJson
+*/
+
+/*! \enum CoapPdu::Error
+
+    \value NoError
+    \value InvalidTokenError
+    \value InvalidPduSizeError
+    \value InvalidOptionDeltaError
+    \value InvalidOptionLengthError
+    \value UnknownOptionError
+*/
+
+
+/*! \fn void CoapPdu::getStatusCodeString(const StatusCode &statusCode);
+    Returns the human readable status code for the given \a statusCode.
+*/
+
+/*! \fn void CoapPdu::setContentType(const ContentType &contentType);
+    Sets the content type of this \l{CoapPdu} to the given \a contentType.
+
+    \sa CoapPdu::ContentType
+*/
+
+/*! \fn void CoapPdu::setMessageType(const MessageType &messageType);
+    Sets the message type of this \l{CoapPdu} to the given \a messageType.
+
+    \sa CoapPdu::MessageType
+*/
+
+/*! \fn void CoapPdu::setStatusCode(const StatusCode &statusCode);
+    Sets the message type of this \l{CoapPdu} to the given \a statusCode.
+
+    \sa CoapPdu::StatusCode
+*/
+
 #include "coappdu.h"
 #include "coapoption.h"
 
 #include <QMetaEnum>
 #include <QTime>
 
+/*! Constructs a CoapPdu with the given \a parent. */
 CoapPdu::CoapPdu(QObject *parent) :
     QObject(parent),
     m_version(1),
@@ -37,6 +167,7 @@ CoapPdu::CoapPdu(QObject *parent) :
     qsrand(QDateTime::currentMSecsSinceEpoch());
 }
 
+/*! Constructs a CoapPdu from the given \a data with the given \a parent. */
 CoapPdu::CoapPdu(const QByteArray &data, QObject *parent) :
     QObject(parent),
     m_version(1),
@@ -51,6 +182,7 @@ CoapPdu::CoapPdu(const QByteArray &data, QObject *parent) :
     unpack(data);
 }
 
+/*! Returns the human readable status code for the given \a statusCode. */
 QString CoapPdu::getStatusCodeString(const CoapPdu::StatusCode &statusCode)
 {
     QString statusCodeString;
@@ -67,68 +199,89 @@ QString CoapPdu::getStatusCodeString(const CoapPdu::StatusCode &statusCode)
     return statusCodeString;
 }
 
+/*! Returns the version of this \l{CoapPdu}. */
 quint8 CoapPdu::version() const
 {
     return m_version;
 }
 
+/*! Sets the version of this \l{CoapPdu} to the given \a version. */
 void CoapPdu::setVersion(const quint8 &version)
 {
     m_version = version;
 }
 
+/*! Returns the \l{CoapPdu::MessageType} of this \l{CoapPdu}. */
 CoapPdu::MessageType CoapPdu::messageType() const
 {
     return m_messageType;
 }
 
+/*! Sets the \l{CoapPdu::MessageType} of this \l{CoapPdu} to the given \a messageType. */
 void CoapPdu::setMessageType(const CoapPdu::MessageType &messageType)
 {
     m_messageType = messageType;
 }
 
+/*! Returns the \l{CoapPdu::StatusCode} of this \l{CoapPdu}. */
 CoapPdu::StatusCode CoapPdu::statusCode() const
 {
     return m_statusCode;
 }
 
+/*! Sets the \l{CoapPdu::StatusCode} of this \l{CoapPdu} to the given \a statusCode. */
 void CoapPdu::setStatusCode(const CoapPdu::StatusCode &statusCode)
 {
     m_statusCode = statusCode;
 }
 
+/*! Returns the messageId of this \l{CoapPdu}. */
 quint16 CoapPdu::messageId() const
 {
     return m_messageId;
 }
 
+/*! Creates a random message id for this \l{CoapPdu} and sets the
+    message id to the created value.
+
+    \sa setMessageId()
+*/
 void CoapPdu::createMessageId()
 {
     setMessageId((quint16)qrand() % 65536);
 }
 
+/*! Sets the messageId of this \l{CoapPdu} to the given \a messageId. */
 void CoapPdu::setMessageId(const quint16 &messageId)
 {
     m_messageId = messageId;
 }
 
+/*! Returns the \l{CoapPdu::ContentType} of this \l{CoapPdu}. */
 CoapPdu::ContentType CoapPdu::contentType() const
 {
     return m_contentType;
 }
 
+/*! Sets the content type of this \l{CoapPdu} to the given \a contentType.
+
+    \sa CoapPdu::ContentType
+*/
 void CoapPdu::setContentType(const CoapPdu::ContentType &contentType)
 {
-    // TODO: add the contentFormat option
-
     m_contentType = contentType;
 }
 
+/*! Returns the token of this \l{CoapPdu}. */
 QByteArray CoapPdu::token() const
 {
     return m_token;
 }
+/*! Creates a random token for this \l{CoapPdu} and sets the
+    token to the created value.
 
+    \sa setToken()
+*/
 void CoapPdu::createToken()
 {
     m_token.clear();
@@ -139,26 +292,35 @@ void CoapPdu::createToken()
     }
 }
 
+/*! Sets the token of this \l{CoapPdu} to the given \a token. */
 void CoapPdu::setToken(const QByteArray &token)
 {
     m_token = token;
 }
 
+/*! Returns the payload of this \l{CoapPdu}. */
 QByteArray CoapPdu::payload() const
 {
     return m_payload;
 }
 
+/*! Sets the payload of this \l{CoapPdu} to the given \a payload. */
 void CoapPdu::setPayload(const QByteArray &payload)
 {
     m_payload = payload;
 }
 
+/*! Returns the list of \l{CoapOption}{CoapOptions} of this \l{CoapPdu}. */
 QList<CoapOption> CoapPdu::options() const
 {
     return m_options;
 }
 
+
+/*! Adds the given \a option with the given \a data to this \l{CoapPdu}.
+
+    \sa CoapOption
+*/
 void CoapPdu::addOption(const CoapOption::Option &option, const QByteArray &data)
 {
     // set pdu data from the option
@@ -196,11 +358,13 @@ void CoapPdu::addOption(const CoapOption::Option &option, const QByteArray &data
     m_options.insert(index + 1, CoapOption(option, data));
 }
 
+/*! Returns the block of this \l{CoapPdu}. */
 CoapPduBlock CoapPdu::block() const
 {
     return m_block;
 }
 
+/*! Returns true if this \l{CoapPdu} has the given \a option. */
 bool CoapPdu::hasOption(const CoapOption::Option &option) const
 {
     foreach (const CoapOption &o, m_options) {
@@ -210,6 +374,7 @@ bool CoapPdu::hasOption(const CoapOption::Option &option) const
     return false;
 }
 
+/*! Resets this \l{CoapPdu} to the default values. */
 void CoapPdu::clear()
 {
     m_version = 1;
@@ -223,11 +388,13 @@ void CoapPdu::clear()
     m_error = NoError;
 }
 
+/*! Returns true if this \l{CoapPdu} has no errors. */
 bool CoapPdu::isValid() const
 {
     return (m_error == NoError);
 }
 
+/*! Returns the packed \l{CoapPdu} as byte array which are ready to send to the server.*/
 QByteArray CoapPdu::pack() const
 {
     QByteArray pduData;
@@ -325,7 +492,6 @@ void CoapPdu::unpack(const QByteArray &data)
     // create a CoapPDU
     if (data.length() < 4) {
         m_error = InvalidPduSizeError;
-        qWarning() << "pdu to small" << data.length();
     }
 
     quint8 *rawData = (quint8 *)data.data();
@@ -335,7 +501,6 @@ void CoapPdu::unpack(const QByteArray &data)
 
     if (tokenLength > 8) {
         m_error = InvalidTokenError;
-        qWarning() << "PDU token to long";
     }
 
     setToken(QByteArray((const char *)rawData + 4, tokenLength));
@@ -391,6 +556,10 @@ void CoapPdu::unpack(const QByteArray &data)
     }
 }
 
+/*! Writes the data of the given \a coapPdu to \a dbg.
+
+    \sa CoapPdu
+*/
 QDebug operator<<(QDebug debug, const CoapPdu &coapPdu)
 {
     const QMetaObject &metaObject = CoapPdu::staticMetaObject;
@@ -402,7 +571,7 @@ QDebug operator<<(QDebug debug, const CoapPdu &coapPdu)
     debug.nospace() << "  Message ID: " << coapPdu.messageId() << endl;
     debug.nospace() << "  Payload size: " << coapPdu.payload().size() << endl;
     foreach (const CoapOption &option, coapPdu.options()) {
-        debug.nospace() << "    " << option;
+        debug.nospace() << "  " << option;
     }
 
     if (!coapPdu.payload().isEmpty())

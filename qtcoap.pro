@@ -1,8 +1,8 @@
 TEMPLATE=subdirs
 
-SUBDIRS += libqtcoap tests examples
+SUBDIRS += libqtcoap tests coap-cli
 
-examples.depends = libqtcoap
+coap-cli.depends = libqtcoap
 tests.depends = libqtcoap
 
 QT += network

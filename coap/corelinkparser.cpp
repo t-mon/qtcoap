@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -18,22 +18,42 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/*!
+    \class CoreLinkParser
+    \brief Provides an easy way to parse a CoRE link list.
+
+    \ingroup coap
+
+    \section2 Example
+
+    \code
+        if (reply->contentType == CoapPdu::ApplicationLink) {
+            CoreLinkParser parser(reply->payload());
+
+            foreach (const CoreLink &link, parser.links()) {
+                qDebug() << link;
+            }
+        }
+    \endcode
+
+    \sa CoreLink
+
+*/
+
 #include "corelinkparser.h"
 
 #include <QDebug>
 
+/*! Constructs a CoRE link parser with the given \a parent. The given \a data should contain a CoRE link list from the discovery. */
 CoreLinkParser::CoreLinkParser(const QByteArray &data, QObject *parent) :
     QObject(parent),
     m_data(data)
 {
     QList<QByteArray> linkList = data.split(',');
     foreach (const QByteArray &linkLine, linkList) {
-        qDebug() << "-------------------------------------";
-        qDebug() << linkLine;
         QList<QByteArray> valueList = linkLine.split(';');
         CoreLink link;
         foreach (const QByteArray &value, valueList) {
-            qDebug() << value;
             if (value.startsWith("<")) {
                 link.setPath(QString(value.mid(1, value.length() - 2)));
             } else if (value.startsWith("rt=")) {
@@ -50,14 +70,12 @@ CoreLinkParser::CoreLinkParser(const QByteArray &data, QObject *parent) :
                 link.setObservable(true);
             }
         }
-        qDebug() << endl << link;
         m_links.append(link);
     }
 }
 
+/*! Returns the parsed list of \l{CoreLink}{CoreLinks}.*/
 QList<CoreLink> CoreLinkParser::links() const
 {
     return m_links;
 }
-
-

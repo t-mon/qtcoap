@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -18,36 +18,125 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/*!
+    \class CoapReply
+    \brief Represents a reply of a CoAP request.
+
+    \ingroup coap
+
+    The CoapReply class contains the data and headers for a request sent with \l{Coap} client.
+
+    \note Please don't forget to delete the reply once it is finished.
+
+    \section2 Example
+
+    \code
+        Coap *coap = new Coap(this);
+        connect(coap, SIGNAL(replyFinished(CoapReply*)), this, SLOT(onReplyFinished(CoapReply*)));
+
+        CoapRequest request(QUrl("coap://example.com/"));
+
+        CoapReply *reply = coap->ping(request);
+    \endcode
+
+    \code
+        void MyClass::onReplyFinished(CoapReply *reply)
+        {
+            if (reply->error() != CoapReply::NoError) {
+              qWarning() << "Reply finished with error" << reply->errorString();
+              reply->deleteLater();
+              return;
+            }
+
+            qDebug() << "Reply finished" << reply;
+            reply->deleteLater();
+        }
+    \endcode
+
+    \sa Coap, CoapRequest
+
+*/
+
+/*! \fn void CoapReply::timeout();
+    This signal is emitted when the reply took to long.
+*/
+
+/*! \fn void CoapReply::finished();
+    This signal is emitted when the reply is finished.
+*/
+
+/*! \fn void CoapReply::error(const Error &code);
+    This signal is emitted when an error occured. The given \a code represents the \l{CoapReply::Error}.
+
+    \sa error(), errorString()
+*/
+
+/*! \enum CoapReply::Error
+
+    \value NoError
+        No error occured. Everything ok.
+    \value HostNotFoundError
+        The remote host name was not found (invalid hostname).
+    \value TimeoutError
+        The server did not respond after 4 retransmissions.
+    \value InvalidUrlSchemeError
+        The given URL does not have a valid scheme.
+    \value InvalidPduError
+        The package data unit (PDU) could not be parsed successfully.
+*/
+
+
 #include "coapreply.h"
 #include "coappdu.h"
 
 #include <QMetaEnum>
 
+/*! Returns the request for this \l{CoapReply}. */
 CoapRequest CoapReply::request() const
 {
     return m_request;
 }
 
+/*! Returns the payload of this \l{CoapReply}. The payload will be available once the \l{CoapReply} is finished.
+
+    \sa isFinished
+*/
 QByteArray CoapReply::payload() const
 {
     return m_payload;
 }
 
+/*! Returns true if the \l{CoapReply} is finished.
+
+    \sa finished()
+*/
 bool CoapReply::isFinished() const
 {
     return m_isFinished;
 }
 
+/*! Returns true if the \l{CoapReply} is running.
+
+    \sa finished()
+*/
 bool CoapReply::isRunning() const
 {
     return m_timer->isActive();
 }
 
+/*! Returns error \l{CoapReply::Error} of the \l{CoapReply}.
+
+    \sa errorString()
+*/
 CoapReply::Error CoapReply::error() const
 {
     return m_error;
 }
 
+/*! Returns error string of the \l{CoapReply}.
+
+    \sa error()
+*/
 QString CoapReply::errorString() const
 {
     QString errorString;
@@ -72,16 +161,19 @@ QString CoapReply::errorString() const
     return errorString;
 }
 
+/*! Returns the \l{CoapPdu::ContentType} of this \l{CoapReply}. */
 CoapPdu::ContentType CoapReply::contentType() const
 {
     return m_contentType;
 }
 
+/*! Returns the \l{CoapPdu::MessageType} of this \l{CoapReply}. */
 CoapPdu::MessageType CoapReply::messageType() const
 {
     return m_messageType;
 }
 
+/*! Returns the \l{CoapPdu::StatusCode} of this \l{CoapReply}. */
 CoapPdu::StatusCode CoapReply::statusCode() const
 {
     return m_statusCode;
@@ -96,9 +188,7 @@ CoapReply::CoapReply(const CoapRequest &request, QObject *parent) :
     m_contentType(CoapPdu::TextPlain),
     m_messageType(CoapPdu::Acknowledgement),
     m_statusCode(CoapPdu::Empty),
-    m_lockedUp(false),
-    m_observation(false),
-    m_observationEnable(false)
+    m_lockedUp(false)
 {
     m_timer = new QTimer(this);
     m_timer->setSingleShot(false);
@@ -241,6 +331,10 @@ void CoapReply::setRequestData(const QByteArray &requestData)
     m_requestData = requestData;
 }
 
+/*! Writes the data of the given \a reply to \a dbg.
+
+    \sa CoapReply
+*/
 QDebug operator<<(QDebug debug, CoapReply *reply)
 {
     const QMetaObject &metaObject = CoapPdu::staticMetaObject;

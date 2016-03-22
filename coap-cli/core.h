@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -23,8 +23,7 @@
 
 #include <QUrl>
 #include <QObject>
-#include <QHostInfo>
-#include <QHostAddress>
+#include <QPointer>
 
 #include "coap.h"
 #include "coappdu.h"
@@ -36,19 +35,19 @@ class Core : public QObject
 public:
     explicit Core(QObject *parent = 0);
 
+    void observe(const QUrl &url);
+    void discover(const QUrl &url);
+    void performRequest(const QUrl &url, const QString &methodString, const QByteArray &payload);
+
 private:
     Coap *m_coap;
-
-    CoapReply *m_pingReply;
-    CoapReply *m_helloReply;
-    CoapReply *m_separatedReply;
-
-    void ping();
-    void hello();
-    void separated();
+    QPointer<CoapReply> m_reply;
+    QPointer<CoapReply> m_observeReply;
+    QPointer<CoapReply> m_discoverReply;
 
 private slots:
     void onReplyFinished(CoapReply *reply);
+    void onNotificationReceived(const CoapObserveResource &resource, const int &notificationNumber, const QByteArray &payload);
 
 };
 

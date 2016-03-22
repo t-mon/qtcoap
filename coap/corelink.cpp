@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015 Simon Stuerz <simon.stuerz@guh.guru>                *
+ *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -18,10 +18,23 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+/*!
+    \class CoreLink
+    \brief Represents a link of a CoRE link format.
+
+    \ingroup coap
+
+    This class represents a Constrained RESTful Environments (CoRE) Link format according to the
+    \l{http://tools.ietf.org/html/rfc6690}{RFC6690} specification.
+
+*/
+
+
 #include "corelink.h"
 
 #include <QMetaEnum>
 
+/*! Constructs a \l{CoreLink}. */
 CoreLink::CoreLink() :
     m_contentType(CoapPdu::TextPlain),
     m_maximumSize(-1),
@@ -29,76 +42,94 @@ CoreLink::CoreLink() :
 {
 }
 
+/*! Returns the path of this \l{CoreLink}. */
 QString CoreLink::path() const
 {
     return m_path;
 }
 
+/*! Sets the \a path of this \l{CoreLink}. */
 void CoreLink::setPath(const QString &path)
 {
     m_path = path;
 }
 
+/*! Returns the title of this \l{CoreLink}. */
 QString CoreLink::title() const
 {
     return m_title;
 }
 
+/*! Sets the \a title of this \l{CoreLink}. */
 void CoreLink::setTitle(const QString &title)
 {
     m_title = title;
 }
 
+/*! Returns the resource type of this \l{CoreLink}. */
 QString CoreLink::resourceType() const
 {
     return m_resourceType;
 }
 
+/*! Sets the resource type of this \l{CoreLink} to the given \a resourceType. */
 void CoreLink::setResourceType(const QString &resourceType)
 {
     m_resourceType = resourceType;
 }
 
+/*! Returns the interface description of this \l{CoreLink}. */
 QString CoreLink::interfaceDescription() const
 {
     return m_interfaceDescription;
 }
 
+/*! Sets the interface description of this \l{CoreLink} to the given \a interfaceDescription. */
 void CoreLink::setInterfaceDescription(const QString &interfaceDescription)
 {
     m_interfaceDescription = interfaceDescription;
 }
 
+/*! Returns the l{CoapPdu::ContentType} of this \l{CoreLink}. */
 CoapPdu::ContentType CoreLink::contentType() const
 {
     return m_contentType;
 }
 
+/*! Sets the l{CoapPdu::ContentType} of this \l{CoreLink} to the given \a contentType. */
 void CoreLink::setContentType(const CoapPdu::ContentType &contentType)
 {
     m_contentType = contentType;
 }
 
+/*! Returns the maximum payload size of this \l{CoreLink}. */
 int CoreLink::maximumSize() const
 {
     return m_maximumSize;
 }
 
+/*! Sets the maximum payload size of this \l{CoreLink} to the given \a maximumSize. */
 void CoreLink::setMaximumSize(const int &maximumSize)
 {
     m_maximumSize = maximumSize;
 }
 
+/*! Returns true if this \l{CoreLink} is observable. */
 bool CoreLink::observable() const
 {
     return m_observable;
 }
 
+/*! Sets this \l{CoreLink} \a observable. */
 void CoreLink::setObservable(const bool &observable)
 {
     m_observable = observable;
 }
 
+/*! Writes the data of the given \a link to \a dbg.
+
+    \sa CoreLink
+*/
 QDebug operator<<(QDebug debug, const CoreLink &link)
 {
     const QMetaObject &metaObject = CoapPdu::staticMetaObject;
