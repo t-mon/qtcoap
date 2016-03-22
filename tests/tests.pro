@@ -3,9 +3,10 @@ TARGET = coaptests
 target.path = /usr/bin
 INSTALLS += target
 
-QMAKE_CXXFLAGS += -Werror
+CONFIG += testcase
 
-CONFIG += testcase c++11
+QMAKE_CXXFLAGS += -Werror -std=c++11
+QMAKE_LFLAGS += -std=c++11
 
 QT += testlib network
 

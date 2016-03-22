@@ -7,5 +7,5 @@ tests.depends = libqtcoap
 
 QT += network
 
-QMAKE_CXXFLAGS += -Werror
-CONFIG += c++11
+QMAKE_CXXFLAGS += -Werror -std=c++11
+QMAKE_LFLAGS += -std=c++11
