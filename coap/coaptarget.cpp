@@ -50,7 +50,7 @@ QList<CoapObserveResource> CoapTarget::observationResources() const
 
 void CoapTarget::addObservationResource(const CoapObserveResource &observationResource)
 {
-    qDebug() << "Add observation resource" << observationResource.token();
+    qDebug() << "Add observation resource" << observationResource.url().toString();
     m_observationResources.append(observationResource);
 }
 
@@ -123,10 +123,10 @@ CoapReply *CoapTarget::dequeueReply()
 
 void CoapTarget::removeReply(CoapReply *reply)
 {
-    if (m_currentReply == reply)
+    if (m_currentReply.data() == reply)
         m_currentReply.clear();
 
-    if (m_currentObservationReply == reply)
+    if (m_currentObservationReply.data() == reply)
         m_currentObservationReply.clear();
 
     if (m_replyQueue.contains(reply))

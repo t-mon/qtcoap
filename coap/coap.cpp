@@ -226,18 +226,16 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
         if (reply->observationEnable()) {
             // Option number 6
             pdu.addOption(CoapOption::Observe, 0);
-            m_observeResources.insert(pdu.token(), CoapObserveResource(reply->request().url(), pdu.token()));
         } else {
             // if disable, we should use the sam token as the notifications
-            foreach (const CoapObserveResource &resource, m_observeResources.values()) {
+            CoapTarget *target = findTarget(reply);
+            foreach (const CoapObserveResource &resource, target->observationResources()) {
                 if (resource.url() == reply->request().url()) {
                     pdu.setToken(resource.token());
                 }
             }
             // Option number 6
             pdu.addOption(CoapOption::Observe, QByteArray::number(1));
-            if (m_observeResources.contains(pdu.token()))
-                m_observeResources.remove(pdu.token());
         }
     }
 
@@ -315,6 +313,7 @@ void Coap::processResponse(const CoapPdu &pdu, const QHostAddress &address, cons
         return;
     }
 
+    // Check if this is the current reply for this target
     if (target->currentReply()) {
         CoapReply *reply = target->currentReply();
         qCDebug(dcCoap) << "<---" << QString("%1:%2").arg(address.toString()).arg(QString::number(port)) << pdu;
@@ -332,9 +331,19 @@ void Coap::processResponse(const CoapPdu &pdu, const QHostAddress &address, cons
             processIdBasedResponse(target, reply, pdu);
             return;
         }
+
+        // Check if this is a disable notifications Response
+        if (reply->observation() && !reply->observationEnable()) {
+            reply->setMessageType(pdu.messageType());
+            reply->setStatusCode(pdu.statusCode());
+            reply->setContentType(pdu.contentType());
+            reply->appendPayloadData(pdu.payload());
+            reply->setFinished();
+            return;
+        }
     }
 
-    // Check if we know the message by token (message token based check)
+    // Check if we know the message by token (async response)
     if (target->hasAsyncReply(pdu.token())) {
         qCDebug(dcCoap) << "<---" << QString("%1:%2").arg(address.toString()).arg(QString::number(port)) << pdu;
 
@@ -354,13 +363,14 @@ void Coap::processResponse(const CoapPdu &pdu, const QHostAddress &address, cons
         return;
     }
 
-    if (m_observerReply) {
-        processBlock2Notification(m_observerReply, pdu);
+    // Check if this is a blocked notification reply
+    if (target->hasRunningObservationReply()) {
+        processBlock2Notification(target, pdu);
         return;
     }
 
     // check if this is a notification
-    if (m_observeResources.keys().contains(pdu.token())) {
+    if (target->hasObservationResource(pdu.token())) {
         processNotification(target, pdu, address, port);
         return;
     }
@@ -391,6 +401,7 @@ void Coap::processIdBasedResponse(CoapTarget *target, CoapReply *reply, const Co
     }
 
     // Piggybacked response
+    reply->setMessageType(pdu.messageType());
     reply->setStatusCode(pdu.statusCode());
     reply->setContentType(pdu.contentType());
     reply->appendPayloadData(pdu.payload());
@@ -467,6 +478,7 @@ void Coap::processBlock2Response(CoapReply *reply, const CoapPdu &pdu)
 
     // check if this was the last block
     if (!pdu.block().moreFlag()) {
+        reply->setMessageType(pdu.messageType());
         reply->setStatusCode(pdu.statusCode());
         reply->setContentType(pdu.contentType());
         reply->setFinished();
@@ -561,8 +573,6 @@ void Coap::processNotification(CoapTarget *target, const CoapPdu &pdu, const QHo
         }
 
         target->setCurrentObservationReply(reply);
-
-        m_observeReplyResource.insert(m_observerReply, resource);
         m_observeBlockwise.insert(reply, notificationNumber);
 
         connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
@@ -624,17 +634,14 @@ void Coap::processNotification(CoapTarget *target, const CoapPdu &pdu, const QHo
     }
 }
 
-void Coap::processBlock2Notification(CoapReply *reply, const CoapPdu &pdu)
+void Coap::processBlock2Notification(CoapTarget *target, const CoapPdu &pdu)
 {
-    if (!m_observeReplyResource.contains(reply)) {
-        qCWarning(dcCoap) << "Could not find observation resource for" << reply;
-        return;
-    }
+    CoapObserveResource resource = target->getObservationResource(pdu.token());
+    CoapReply *reply = target->currentObservationReply();
 
-    CoapObserveResource resource = m_observeReplyResource.value(reply);
+    // Respond Block2
 
-    // respond Block2
-    // check if this was the last block
+    // Check if this was the last block
     if (!pdu.block().moreFlag()) {
         // respond with ACK
         CoapPdu responsePdu;
@@ -642,21 +649,23 @@ void Coap::processBlock2Notification(CoapReply *reply, const CoapPdu &pdu)
         responsePdu.setStatusCode(CoapPdu::Empty);
         responsePdu.setMessageId(pdu.messageId());
         responsePdu.setToken(pdu.token());
-
         qCDebug(dcCoap) << "---> Notification" << endl << responsePdu;
         sendCoapPdu(reply->hostAddress(), reply->port(), responsePdu);
 
         reply->appendPayloadData(pdu.payload());
 
         emit notificationReceived(resource, m_observeBlockwise.take(reply), reply->payload());
-        m_observeReplyResource.remove(m_observerReply);
-        m_observerReply->deleteLater();
-        m_observerReply.clear();
+
+        // Clean up
+        target->removeReply(reply);
+        reply->deleteLater();
         return;
     }
 
+    // Not the last block
     reply->appendPayloadData(pdu.payload());
 
+    // Request the next block data
     CoapPdu nextBlockRequest;
     nextBlockRequest.setContentType(reply->request().contentType());
     nextBlockRequest.setMessageType(reply->request().messageType());
@@ -714,7 +723,6 @@ CoapTarget *Coap::findTarget(CoapReply *reply)
 
     return NULL;
 }
-
 
 void Coap::onHostLookupFinished(const QHostInfo &hostInfo)
 {
@@ -812,7 +820,7 @@ void Coap::onReplyFinished()
     if (target->currentReply().data() == reply) {
         target->removeReply(reply);
 
-        // Check if this was an enable reply
+        // Check if this was an enable/disable reply
         if (reply->observation()) {
             // Check if enable/disable was successfull
             if (reply->statusCode() == CoapPdu::Content) {

@@ -47,8 +47,8 @@ private:
     QByteArray m_uploadData;
 
 private slots:
-//    void observeResource();
-//    void observeLargeResource();
+    void observeResource();
+    void observeLargeResource();
 
     void invalidUrl_data();
     void invalidUrl();

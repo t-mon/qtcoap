@@ -51,6 +51,7 @@ class Coap : public QObject
 public:
     explicit Coap(QObject *parent = 0, const quint16 &port = 5683);
 
+    // Methods
     CoapReply *ping(const CoapRequest &request);
     CoapReply *get(const CoapRequest &request);
     CoapReply *put(const CoapRequest &request, const QByteArray &data = QByteArray());
@@ -64,14 +65,10 @@ public:
 private:
     QUdpSocket *m_socket;
     quint16 m_port;
-    QList<CoapTarget *> m_coapTargets;
-    QHash<int, CoapReply *> m_runningHostLookups;
-    QHash<QByteArray, CoapObserveResource> m_observeResources; // token | resource
 
-    // Blockwise notifications
-    QPointer<CoapReply> m_observerReply;
-    QHash<CoapReply *, CoapObserveResource> m_observeReplyResource; // observe reply | resource
-    QHash<CoapReply *, int> m_observeBlockwise; // observe reply | observe nr.
+    QList<CoapTarget *> m_coapTargets;
+    QHash<int, CoapReply *> m_runningHostLookups; // lookupId | reply
+    QHash<CoapReply *, int> m_observeBlockwise; // reply | observe nr.
 
     void lookupHost(CoapReply *reply);
     void sendRequest(CoapReply *reply, const bool &lookedUp = false);
@@ -82,13 +79,15 @@ private:
     void processResponse(const CoapPdu &pdu, const QHostAddress &address, const quint16 &port);
     void processIdBasedResponse(CoapTarget *target, CoapReply *reply, const CoapPdu &pdu);
 
+    // Process blocked response
     void processBlock1Response(CoapReply *reply, const CoapPdu &pdu);
     void processBlock2Response(CoapReply *reply, const CoapPdu &pdu);
 
     // Process notifications
     void processNotification(CoapTarget *target, const CoapPdu &pdu, const QHostAddress &address, const quint16 &port);
-    void processBlock2Notification(CoapReply *reply, const CoapPdu &pdu);
+    void processBlock2Notification(CoapTarget *target, const CoapPdu &pdu);
 
+    // Search methods
     CoapTarget *findTarget(const QHostAddress &address);
     CoapTarget *findTarget(CoapReply *reply);
 
