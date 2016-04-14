@@ -31,6 +31,7 @@
 
 #include "coaprequest.h"
 #include "coapreply.h"
+#include "coaptarget.h"
 #include "coapobserveresource.h"
 
 /* Information about CoAP
@@ -60,46 +61,44 @@ public:
     CoapReply *enableResourceNotifications(const CoapRequest &request);
     CoapReply *disableNotifications(const CoapRequest &request);
 
-
 private:
     QUdpSocket *m_socket;
-
-    QPointer<CoapReply> m_reply;
-    QQueue<CoapReply *> m_replyQueue;
-
-
+    quint16 m_port;
+    QList<CoapTarget *> m_coapTargets;
     QHash<int, CoapReply *> m_runningHostLookups;
-
-    QHash<QByteArray, CoapObserveResource> m_observeResources;          // token | resource
+    QHash<QByteArray, CoapObserveResource> m_observeResources; // token | resource
 
     // Blockwise notifications
     QPointer<CoapReply> m_observerReply;
-    QHash<CoapReply *, CoapObserveResource> m_observeReplyResource;     // observe reply | resource
-    QHash<CoapReply *, int> m_observeBlockwise;                         // observe reply | observe nr.
+    QHash<CoapReply *, CoapObserveResource> m_observeReplyResource; // observe reply | resource
+    QHash<CoapReply *, int> m_observeBlockwise; // observe reply | observe nr.
 
-    void lookupHost();
+    void lookupHost(CoapReply *reply);
     void sendRequest(CoapReply *reply, const bool &lookedUp = false);
     void sendData(const QHostAddress &hostAddress, const quint16 &port, const QByteArray &data);
     void sendCoapPdu(const QHostAddress &address, const quint16 &port, const CoapPdu &pdu);
 
+    // Process response
     void processResponse(const CoapPdu &pdu, const QHostAddress &address, const quint16 &port);
-    void processIdBasedResponse(CoapReply *reply, const CoapPdu &pdu);
-    void processTokenBasedResponse(CoapReply *reply, const CoapPdu &pdu);
-
-    void processNotification(const CoapPdu &pdu, const QHostAddress &address, const quint16 &port);
+    void processIdBasedResponse(CoapTarget *target, CoapReply *reply, const CoapPdu &pdu);
 
     void processBlock1Response(CoapReply *reply, const CoapPdu &pdu);
     void processBlock2Response(CoapReply *reply, const CoapPdu &pdu);
 
+    // Process notifications
+    void processNotification(CoapTarget *target, const CoapPdu &pdu, const QHostAddress &address, const quint16 &port);
     void processBlock2Notification(CoapReply *reply, const CoapPdu &pdu);
 
+    CoapTarget *findTarget(const QHostAddress &address);
+    CoapTarget *findTarget(CoapReply *reply);
 
 signals:
     void replyFinished(CoapReply *reply);
     void notificationReceived(const CoapObserveResource &resource, const int &notificationNumber, const QByteArray &payload);
 
 private slots:
-    void hostLookupFinished(const QHostInfo &hostInfo);
+    void onHostLookupFinished(const QHostInfo &hostInfo);
+    void onSocketError(QAbstractSocket::SocketError error);
     void onReadyRead();
     void onReplyTimeout();
     void onReplyFinished();

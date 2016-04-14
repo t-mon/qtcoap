@@ -15,7 +15,8 @@ SOURCES += \
     $$PWD/coappdublock.cpp \
     $$PWD/corelinkparser.cpp \
     $$PWD/corelink.cpp \
-    $$PWD/coapobserveresource.cpp
+    $$PWD/coapobserveresource.cpp \
+    $$PWD/coaptarget.cpp
 
 HEADERS += \
     $$PWD/coap.h \
@@ -26,4 +27,5 @@ HEADERS += \
     $$PWD/coappdublock.h \
     $$PWD/corelinkparser.h \
     $$PWD/corelink.h \
-    $$PWD/coapobserveresource.h
+    $$PWD/coapobserveresource.h \
+    $$PWD/coaptarget.h

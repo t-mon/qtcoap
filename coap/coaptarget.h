@@ -18,71 +18,61 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAPTESTS_H
-#define COAPTESTS_H
+#ifndef COAPTARGET_H
+#define COAPTARGET_H
 
-#include <QUrl>
 #include <QObject>
-#include <QHostInfo>
-#include <QHostAddress>
+#include <QPointer>
+#include <QQueue>
 
-#include <QSignalSpy>
-#include <QtTest>
-
-#include "coap.h"
-#include "coappdu.h"
 #include "coapreply.h"
-#include "corelinkparser.h"
 #include "coapobserveresource.h"
 
-class CoapTests : public QObject
+class CoapTarget : public QObject
 {
     Q_OBJECT
-
 public:
-    explicit CoapTests(QObject *parent = 0);
+    explicit CoapTarget(const QHostAddress &address, QObject *parent = 0);
+
+    QHostAddress address() const;
+
+    QPointer<CoapReply> currentObservationReply() const;
+    void setCurrentObservationReply(CoapReply *reply);
+
+    QList<CoapObserveResource> observationResources() const;
+    void addObservationResource(const CoapObserveResource &observationResource);
+    void removeObservationResource(const QByteArray &token);
+    CoapObserveResource getObservationResource(const QByteArray &token);
+
+    QPointer<CoapReply> currentReply() const;
+    void setCurrentReply(CoapReply *reply);
+    void clearCurrentReply();
+
+    QList<CoapReply *> asyncReplies() const;
+    QPointer<CoapReply> asyncReply(const QByteArray &token) const;
+    void addAsyncReply(CoapReply *reply);
+
+    QQueue<CoapReply *> queue() const;
+    void enqueueReply(CoapReply *reply);
+    CoapReply *dequeueReply();
+
+    void removeReply(CoapReply *reply);
+
+    bool isEmpty() const;
+    bool hasRunningReply() const;
+    bool hasRunningObservationReply() const;
+    bool hasAsyncReply(const QByteArray &token);
+    bool hasObservationResource(const QByteArray &token);
+    bool hasReply(CoapReply *reply) const;
 
 private:
-    Coap *m_coap;
-    QByteArray m_uploadData;
-
-private slots:
-//    void observeResource();
-//    void observeLargeResource();
-
-    void invalidUrl_data();
-    void invalidUrl();
-    void invalidScheme();
-
-    void ping();
-    void hello();
-    void broken();
-    void query();
-    void subPath();
-    void extendedOptionLength();
-    void specialCharacters();
-
-    void extendedDelta_data();
-    void extendedDelta();
-
-    void secret();
-    void separated();
-
-    void deleteResource();
-    void post();
-    void put();
-
-    void jsonMessage();
-
-    void largeDownload();
-    void largeCreate();
-    void largeUpdate();
-
-    void multipleCalls();
-
-    void coreLinkParser();
-
+    QHostAddress m_address;
+    QPointer<CoapReply> m_currentReply;
+    QList<CoapReply *> m_asyncReplies;
+    QPointer<CoapReply> m_currentObservationReply;
+    QList<CoapObserveResource> m_observationResources;
+    QQueue<CoapReply *> m_replyQueue;
 
 };
 
-#endif // COAPTESTS_H
+#endif // COAPTARGET_H

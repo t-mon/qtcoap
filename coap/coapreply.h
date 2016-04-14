@@ -31,6 +31,7 @@
 class CoapReply : public QObject
 {
     friend class Coap;
+    friend class CoapTarget;
 
     Q_OBJECT
     Q_ENUMS(Error)
