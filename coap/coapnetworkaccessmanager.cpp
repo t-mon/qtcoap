@@ -788,7 +788,11 @@ void CoapNetworkAccessManager::onReadyRead()
         m_socket->readDatagram(data.data(), data.size(), &hostAddress, &port);
     }
 
-    processResponse(CoapPdu(data), QHostAddress(hostAddress.toIPv6Address()), port);
+    if (hostAddress.protocol() == QAbstractSocket::IPv4Protocol) {
+        processResponse(CoapPdu(data), QHostAddress(hostAddress.toIPv4Address()), port);
+    } else {
+        processResponse(CoapPdu(data), QHostAddress(hostAddress.toIPv6Address()), port);
+    }
 }
 
 void CoapNetworkAccessManager::onReplyTimeout()
