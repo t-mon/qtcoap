@@ -304,12 +304,12 @@ void CoapNetworkAccessManager::processResponse(const CoapPdu &pdu, const QHostAd
     CoapTarget *target = findTarget(address);
     if (!target) {
         qCDebug(dcCoap) << "Got message without request or registered observe resource from" << address.toString() << endl << "<---" << pdu;
-        CoapPdu responsePdu;
-        responsePdu.setMessageType(CoapPdu::Reset);
-        responsePdu.setMessageId(pdu.messageId());
-        responsePdu.setToken(pdu.token());
-        qCDebug(dcCoap) << "--->" << responsePdu;
-        sendCoapPdu(address, port, responsePdu);
+//        CoapPdu responsePdu;
+//        responsePdu.setMessageType(CoapPdu::Reset);
+//        responsePdu.setMessageId(pdu.messageId());
+//        responsePdu.setToken(pdu.token());
+//        qCDebug(dcCoap) << "--->" << responsePdu;
+//        sendCoapPdu(address, port, responsePdu);
         return;
     }
 
@@ -707,7 +707,7 @@ void CoapNetworkAccessManager::processBlock2Notification(CoapTarget *target, con
 CoapTarget *CoapNetworkAccessManager::findTarget(const QHostAddress &address)
 {
     foreach (CoapTarget *target, m_coapTargets) {
-        if (QHostAddress(target->address().toIPv6Address()) == QHostAddress(address.toIPv6Address()))
+        if (target->address() == address)
             return target;
     }
     return NULL;
@@ -742,7 +742,7 @@ void CoapNetworkAccessManager::onHostLookupFinished(const QHostInfo &hostInfo)
         return;
     }
 
-    QHostAddress hostAddress(hostInfo.addresses().first().toIPv6Address());
+    QHostAddress hostAddress(hostInfo.addresses().first());
     reply->setHostAddress(hostAddress);
     reply->setPort(reply->request().url().port(5683));
 
