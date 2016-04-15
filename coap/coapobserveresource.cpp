@@ -26,7 +26,7 @@
 
     The CoapObserveResource class holds information about an observed resource.
 
-    \sa Coap::notificationReceived()
+    \sa CoapNetworkAccessManager::notificationReceived()
 
 */
 

@@ -30,7 +30,7 @@
 
 class CoapReply : public QObject
 {
-    friend class Coap;
+    friend class CoapNetworkAccessManager;
     friend class CoapTarget;
 
     Q_OBJECT

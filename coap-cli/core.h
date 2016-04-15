@@ -25,7 +25,7 @@
 #include <QObject>
 #include <QPointer>
 
-#include "coap.h"
+#include "coapnetworkaccessmanager.h"
 #include "coappdu.h"
 #include "coapreply.h"
 
@@ -40,7 +40,7 @@ public:
     void performRequest(const QUrl &url, const QString &methodString, const QByteArray &payload);
 
 private:
-    Coap *m_coap;
+    CoapNetworkAccessManager *m_coap;
     QPointer<CoapReply> m_reply;
     QPointer<CoapReply> m_observeReply;
     QPointer<CoapReply> m_discoverReply;

@@ -19,12 +19,12 @@
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 /*!
-    \class Coap
+    \class CoapNetworkAccessManager
     \brief The client connection class to a CoAP server.
 
     \ingroup coap
 
-    The Coap class provides a signal solt based communication with a \l{https://tools.ietf.org/html/rfc7252}{CoAP (Constrained Application Protocol)}
+    The CoapNetworkAccessManager class provides a signal solt based communication with a \l{https://tools.ietf.org/html/rfc7252}{CoAP (Constrained Application Protocol)}
     server. The API of this class was inspired by the \l{http://doc.qt.io/qt-5/qnetworkaccessmanager.html}{QNetworkAccessManager} and was
     written according to the \l{https://tools.ietf.org/html/rfc7252}{RFC7252}.
     This class supports also blockwise transfere according to the \l{https://tools.ietf.org/html/draft-ietf-core-block-18}{IETF V18} specifications and
@@ -37,7 +37,7 @@
         MyClass::MyClass(QObject *parent) :
           QObject(parent)
         {
-          Coap *coap = new Coap(this);
+          CoapNetworkAccessManager *coap = new CoapNetworkAccessManager(this);
           connect(coap, SIGNAL(replyFinished(CoapReply*)), this, SLOT(onReplyFinished(CoapReply*)));
 
           CoapRequest request(QUrl("coap://coap.me/hello"));
@@ -60,23 +60,23 @@
     \endcode
 */
 
-/*! \fn void Coap::replyFinished(CoapReply *reply);
+/*! \fn void CoapNetworkAccessManager::replyFinished(CoapReply *reply);
     This signal is emitted when a \a reply is finished.
 */
 
-/*! \fn void Coap::notificationReceived(const CoapObserveResource &resource, const int &notificationNumber, const QByteArray &payload);
+/*! \fn void CoapNetworkAccessManager::notificationReceived(const CoapObserveResource &resource, const int &notificationNumber, const QByteArray &payload);
     This signal is emitted when a value of an observed \a resource changed. The \a notificationNumber specifies the the count of the notification
     to keep the correct order. The value can be parsed from the \a payload.
 */
 
-#include "coap.h"
+#include "coapnetworkaccessmanager.h"
 #include "coappdu.h"
 #include "coapoption.h"
 
-Q_LOGGING_CATEGORY(dcCoap, "Coap")
+Q_LOGGING_CATEGORY(dcCoap, "CoAP")
 
 /*! Constructs a coap access manager with the given \a parent and \a port. */
-Coap::Coap(QObject *parent, const quint16 &port) :
+CoapNetworkAccessManager::CoapNetworkAccessManager(QObject *parent, const quint16 &port) :
     QObject(parent),
     m_port(port)
 {
@@ -91,13 +91,13 @@ Coap::Coap(QObject *parent, const quint16 &port) :
 
 /*! Performs a ping request to the CoAP server specified in the given \a request.
  *  Returns a \l{CoapReply} to match the response with the request. */
-CoapReply *Coap::ping(const CoapRequest &request)
+CoapReply *CoapNetworkAccessManager::ping(const CoapRequest &request)
 {
     CoapReply *reply = new CoapReply(request, this);
     reply->setRequestMethod(CoapPdu::Empty);
 
-    connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-    connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+    connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+    connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
     lookupHost(reply);
 
@@ -106,13 +106,13 @@ CoapReply *Coap::ping(const CoapRequest &request)
 
 /*! Performs a GET request to the CoAP server specified in the given \a request.
  *  Returns a \l{CoapReply} to match the response with the request. */
-CoapReply *Coap::get(const CoapRequest &request)
+CoapReply *CoapNetworkAccessManager::get(const CoapRequest &request)
 {
     CoapReply *reply = new CoapReply(request, this);
     reply->setRequestMethod(CoapPdu::Get);
 
-    connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-    connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+    connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+    connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
     lookupHost(reply);
 
@@ -121,14 +121,14 @@ CoapReply *Coap::get(const CoapRequest &request)
 
 /*! Performs a PUT request to the CoAP server specified in the given \a request and \a data.
  *  Returns a \l{CoapReply} to match the response with the request. */
-CoapReply *Coap::put(const CoapRequest &request, const QByteArray &data)
+CoapReply *CoapNetworkAccessManager::put(const CoapRequest &request, const QByteArray &data)
 {
     CoapReply *reply = new CoapReply(request, this);
     reply->setRequestMethod(CoapPdu::Put);
     reply->setRequestPayload(data);
 
-    connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-    connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+    connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+    connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
     lookupHost(reply);
 
@@ -137,14 +137,14 @@ CoapReply *Coap::put(const CoapRequest &request, const QByteArray &data)
 
 /*! Performs a POST request to the CoAP server specified in the given \a request and \a data.
  *  Returns a \l{CoapReply} to match the response with the request. */
-CoapReply *Coap::post(const CoapRequest &request, const QByteArray &data)
+CoapReply *CoapNetworkAccessManager::post(const CoapRequest &request, const QByteArray &data)
 {
     CoapReply *reply = new CoapReply(request, this);
     reply->setRequestMethod(CoapPdu::Post);
     reply->setRequestPayload(data);
 
-    connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-    connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+    connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+    connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
     lookupHost(reply);
 
@@ -153,13 +153,13 @@ CoapReply *Coap::post(const CoapRequest &request, const QByteArray &data)
 
 /*! Performs a DELETE request to the CoAP server specified in the given \a request.
  *  Returns a \l{CoapReply} to match the response with the request. */
-CoapReply *Coap::deleteResource(const CoapRequest &request)
+CoapReply *CoapNetworkAccessManager::deleteResource(const CoapRequest &request)
 {
     CoapReply *reply = new CoapReply(request, this);
     reply->setRequestMethod(CoapPdu::Delete);
 
-    connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-    connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+    connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+    connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
     lookupHost(reply);
 
@@ -169,15 +169,15 @@ CoapReply *Coap::deleteResource(const CoapRequest &request)
 /*! Enables notifications (observing) on the CoAP server for the resource specified in the
  *  given \a request.
  *  Returns a \l{CoapReply} to match the response with the request. */
-CoapReply *Coap::enableResourceNotifications(const CoapRequest &request)
+CoapReply *CoapNetworkAccessManager::enableResourceNotifications(const CoapRequest &request)
 {
     CoapReply *reply = new CoapReply(request, this);
     reply->setRequestMethod(CoapPdu::Get);
     reply->setObservation(true);
     reply->setObservationEnable(true);
 
-    connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-    connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+    connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+    connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
     lookupHost(reply);
 
@@ -187,7 +187,7 @@ CoapReply *Coap::enableResourceNotifications(const CoapRequest &request)
 /*! Disables notifications (observing) on the CoAP server for the resource specified in the
  *  given \a request.
  *  Returns a \l{CoapReply} to match the response with the request. */
-CoapReply *Coap::disableNotifications(const CoapRequest &request)
+CoapReply *CoapNetworkAccessManager::disableNotifications(const CoapRequest &request)
 {
     CoapReply *reply = new CoapReply(request, this);
     reply->setRequestMethod(CoapPdu::Get);
@@ -195,21 +195,21 @@ CoapReply *Coap::disableNotifications(const CoapRequest &request)
     reply->setObservation(true);
     reply->setObservationEnable(false);
 
-    connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-    connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+    connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+    connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
     lookupHost(reply);
 
     return reply;
 }
 
-void Coap::lookupHost(CoapReply *reply)
+void CoapNetworkAccessManager::lookupHost(CoapReply *reply)
 {
     int lookupId = QHostInfo::lookupHost(reply->request().url().host(), this, SLOT(onHostLookupFinished(QHostInfo)));
     m_runningHostLookups.insert(lookupId, reply);
 }
 
-void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
+void CoapNetworkAccessManager::sendRequest(CoapReply *reply, const bool &lookedUp)
 {
     CoapPdu pdu;
     pdu.setMessageType(reply->request().messageType());
@@ -289,17 +289,17 @@ void Coap::sendRequest(CoapReply *reply, const bool &lookedUp)
     }
 }
 
-void Coap::sendData(const QHostAddress &hostAddress, const quint16 &port, const QByteArray &data)
+void CoapNetworkAccessManager::sendData(const QHostAddress &hostAddress, const quint16 &port, const QByteArray &data)
 {
     m_socket->writeDatagram(data, hostAddress, port);
 }
 
-void Coap::sendCoapPdu(const QHostAddress &hostAddress, const quint16 &port, const CoapPdu &pdu)
+void CoapNetworkAccessManager::sendCoapPdu(const QHostAddress &hostAddress, const quint16 &port, const CoapPdu &pdu)
 {
     m_socket->writeDatagram(pdu.pack(), hostAddress, port);
 }
 
-void Coap::processResponse(const CoapPdu &pdu, const QHostAddress &address, const quint16 &port)
+void CoapNetworkAccessManager::processResponse(const CoapPdu &pdu, const QHostAddress &address, const quint16 &port)
 {
     CoapTarget *target = findTarget(address);
     if (!target) {
@@ -377,7 +377,7 @@ void Coap::processResponse(const CoapPdu &pdu, const QHostAddress &address, cons
 
 }
 
-void Coap::processIdBasedResponse(CoapTarget *target, CoapReply *reply, const CoapPdu &pdu)
+void CoapNetworkAccessManager::processIdBasedResponse(CoapTarget *target, CoapReply *reply, const CoapPdu &pdu)
 {
     // check if this is an empty ACK response (which indicates a separated response)
     if (pdu.statusCode() == CoapPdu::Empty && pdu.messageType() == CoapPdu::Acknowledgement) {
@@ -408,7 +408,7 @@ void Coap::processIdBasedResponse(CoapTarget *target, CoapReply *reply, const Co
     reply->setFinished();
 }
 
-void Coap::processBlock1Response(CoapReply *reply, const CoapPdu &pdu)
+void CoapNetworkAccessManager::processBlock1Response(CoapReply *reply, const CoapPdu &pdu)
 {
     qCDebug(dcCoap) << QString("Sent successfully block #%1").arg(pdu.block().blockNumber());
 
@@ -472,7 +472,7 @@ void Coap::processBlock1Response(CoapReply *reply, const CoapPdu &pdu)
     sendData(reply->hostAddress(), reply->port(), pduData);
 }
 
-void Coap::processBlock2Response(CoapReply *reply, const CoapPdu &pdu)
+void CoapNetworkAccessManager::processBlock2Response(CoapReply *reply, const CoapPdu &pdu)
 {
     reply->appendPayloadData(pdu.payload());
 
@@ -525,7 +525,7 @@ void Coap::processBlock2Response(CoapReply *reply, const CoapPdu &pdu)
     sendData(reply->hostAddress(), reply->port(), pduData);
 }
 
-void Coap::processNotification(CoapTarget *target, const CoapPdu &pdu, const QHostAddress &address, const quint16 &port)
+void CoapNetworkAccessManager::processNotification(CoapTarget *target, const CoapPdu &pdu, const QHostAddress &address, const quint16 &port)
 {
     qCDebug(dcCoap) << "<--- Notification" << endl << pdu;
 
@@ -575,8 +575,8 @@ void Coap::processNotification(CoapTarget *target, const CoapPdu &pdu, const QHo
         target->setCurrentObservationReply(reply);
         m_observeBlockwise.insert(reply, notificationNumber);
 
-        connect(reply, &CoapReply::timeout, this, &Coap::onReplyTimeout);
-        connect(reply, &CoapReply::finished, this, &Coap::onReplyFinished);
+        connect(reply, &CoapReply::timeout, this, &CoapNetworkAccessManager::onReplyTimeout);
+        connect(reply, &CoapReply::finished, this, &CoapNetworkAccessManager::onReplyFinished);
 
         CoapPdu pdu;
         pdu.setMessageType(reply->request().messageType());
@@ -634,7 +634,7 @@ void Coap::processNotification(CoapTarget *target, const CoapPdu &pdu, const QHo
     }
 }
 
-void Coap::processBlock2Notification(CoapTarget *target, const CoapPdu &pdu)
+void CoapNetworkAccessManager::processBlock2Notification(CoapTarget *target, const CoapPdu &pdu)
 {
     CoapObserveResource resource = target->getObservationResource(pdu.token());
     CoapReply *reply = target->currentObservationReply();
@@ -706,7 +706,7 @@ void Coap::processBlock2Notification(CoapTarget *target, const CoapPdu &pdu)
     sendData(reply->hostAddress(), reply->port(), pduData);
 }
 
-CoapTarget *Coap::findTarget(const QHostAddress &address)
+CoapTarget *CoapNetworkAccessManager::findTarget(const QHostAddress &address)
 {
     foreach (CoapTarget *target, m_coapTargets) {
         if (target->address() == address)
@@ -715,7 +715,7 @@ CoapTarget *Coap::findTarget(const QHostAddress &address)
     return NULL;
 }
 
-CoapTarget *Coap::findTarget(CoapReply *reply)
+CoapTarget *CoapNetworkAccessManager::findTarget(CoapReply *reply)
 {
     CoapTarget *target = findTarget(reply->hostAddress());
     if (target && target->hasReply(reply))
@@ -724,7 +724,7 @@ CoapTarget *Coap::findTarget(CoapReply *reply)
     return NULL;
 }
 
-void Coap::onHostLookupFinished(const QHostInfo &hostInfo)
+void CoapNetworkAccessManager::onHostLookupFinished(const QHostInfo &hostInfo)
 {
     CoapReply *reply = m_runningHostLookups.take(hostInfo.lookupId());
 
@@ -774,12 +774,12 @@ void Coap::onHostLookupFinished(const QHostInfo &hostInfo)
     }
 }
 
-void Coap::onSocketError(QAbstractSocket::SocketError error)
+void CoapNetworkAccessManager::onSocketError(QAbstractSocket::SocketError error)
 {
     qCWarning(dcCoap()) << "Socket error" << error << m_socket->errorString();
 }
 
-void Coap::onReadyRead()
+void CoapNetworkAccessManager::onReadyRead()
 {
     QHostAddress hostAddress;
     QByteArray data;
@@ -794,7 +794,7 @@ void Coap::onReadyRead()
     processResponse(pdu, hostAddress, port);
 }
 
-void Coap::onReplyTimeout()
+void CoapNetworkAccessManager::onReplyTimeout()
 {
     CoapReply *reply = qobject_cast<CoapReply *>(sender());
     if (reply->m_retransmissions < 5)
@@ -805,7 +805,7 @@ void Coap::onReplyTimeout()
     m_socket->writeDatagram(reply->requestData(), reply->hostAddress(), reply->port());
 }
 
-void Coap::onReplyFinished()
+void CoapNetworkAccessManager::onReplyFinished()
 {
     CoapReply *reply = qobject_cast<CoapReply *>(sender());
     CoapTarget *target = findTarget(reply);

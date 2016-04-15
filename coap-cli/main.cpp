@@ -24,7 +24,7 @@
 #include <QLoggingCategory>
 
 #include "core.h"
-#include "coap.h"
+#include "coapnetworkaccessmanager.h"
 
 static QHash<QString, bool> s_loggingFilters;
 
@@ -104,9 +104,9 @@ int main(int argc, char *argv[])
     }
 
     if (parser.isSet(verboseOption)) {
-        s_loggingFilters.insert("Coap", true);
+        s_loggingFilters.insert("CoapNetworkAccessManager", true);
     } else {
-         s_loggingFilters.insert("Coap", false);
+         s_loggingFilters.insert("CoapNetworkAccessManager", false);
     }
 
     // install logging filter

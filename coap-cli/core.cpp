@@ -30,10 +30,10 @@ Core::Core(QObject *parent) :
 {
     // create coap instance
     // Note: there sould only be one per application
-    m_coap = new Coap(this);
+    m_coap = new CoapNetworkAccessManager(this);
 
-    connect(m_coap, &Coap::replyFinished, this, &Core::onReplyFinished);
-    connect(m_coap, &Coap::notificationReceived, this, &Core::onNotificationReceived);
+    connect(m_coap, &CoapNetworkAccessManager::replyFinished, this, &Core::onReplyFinished);
+    connect(m_coap, &CoapNetworkAccessManager::notificationReceived, this, &Core::onNotificationReceived);
 }
 
 void Core::observe(const QUrl &url)

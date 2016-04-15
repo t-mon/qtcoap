@@ -6,8 +6,20 @@ QMAKE_LFLAGS += -std=c++11
 INCLUDEPATH += $$PWD
 DEPENDPATH += $$PWD
 
+HEADERS += \
+    $$PWD/coapnetworkaccessmanager.h \
+    $$PWD/coappdu.h \
+    $$PWD/coapoption.h \
+    $$PWD/coaprequest.h \
+    $$PWD/coapreply.h \
+    $$PWD/coappdublock.h \
+    $$PWD/corelinkparser.h \
+    $$PWD/corelink.h \
+    $$PWD/coapobserveresource.h \
+    $$PWD/coaptarget.h
+
 SOURCES += \
-    $$PWD/coap.cpp \
+    $$PWD/coapnetworkaccessmanager.cpp \
     $$PWD/coappdu.cpp \
     $$PWD/coapoption.cpp \
     $$PWD/coaprequest.cpp \
@@ -18,14 +30,3 @@ SOURCES += \
     $$PWD/coapobserveresource.cpp \
     $$PWD/coaptarget.cpp
 
-HEADERS += \
-    $$PWD/coap.h \
-    $$PWD/coappdu.h \
-    $$PWD/coapoption.h \
-    $$PWD/coaprequest.h \
-    $$PWD/coapreply.h \
-    $$PWD/coappdublock.h \
-    $$PWD/corelinkparser.h \
-    $$PWD/corelink.h \
-    $$PWD/coapobserveresource.h \
-    $$PWD/coaptarget.h

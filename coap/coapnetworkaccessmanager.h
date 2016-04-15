@@ -45,11 +45,11 @@
 
 Q_DECLARE_LOGGING_CATEGORY(dcCoap)
 
-class Coap : public QObject
+class CoapNetworkAccessManager : public QObject
 {
     Q_OBJECT
 public:
-    explicit Coap(QObject *parent = 0, const quint16 &port = 5683);
+    explicit CoapNetworkAccessManager(QObject *parent = 0, const quint16 &port = 5683);
 
     // Methods
     CoapReply *ping(const CoapRequest &request);
