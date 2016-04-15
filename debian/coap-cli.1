@@ -6,10 +6,10 @@ coap-cli
 .SH SYNOPSIS
 .B coap-cli
 [\fIOPTIONS\fR]
-[\fIMETHOD\fR] 
+[\fIMETHOD\fR]
 \fIurl\fR
-
 .SH DESCRIPTION
+Command line interface for interacting with a CoAP server based on Qt 5.
 .SH OPTIONS
 .TP
 \fB\-h\fR, \fB\-\-help\fR
@@ -26,7 +26,6 @@ Discover the resources of the server.
 .TP
 \fB\-v\fR, \fB\-\-verbose\fR
 Print the whole communication process.
-
 .SH METHODS
 .TP
 \fBget\fR
@@ -40,7 +39,6 @@ Perform a POST request. See also \fI--payload\fR.
 .TP
 \fBdelete\fR
 Perform a DELETE request.
-
 .SH EXAMPLES
 .TP
 Discover a CoAP server:
@@ -58,7 +56,6 @@ $ coap-cli -p "data for the resource" post coap://example.com/obs
 Observe a resource and print notifications:
 .IP
 $ coap-cli -o coap://example.com/obs
-
 .SH AUTHOR
 Written by Simon Stürz
 .SH COPYRIGHT

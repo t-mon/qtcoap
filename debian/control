@@ -16,7 +16,7 @@ Depends: libqt5network5,
   ${shlibs:Depends},
   ${misc:Depends}
 Description: Command line interface for interacting with a CoAP server
-
+  Command line interface for interacting with a CoAP server based on Qt 5.
 
 Package: libqtcoap1
 Section: libs
@@ -26,7 +26,7 @@ Depends: ${shlibs:Depends},
   libqt5network5,
   libqt5gui5
 Description: Qt 5 based library for CoAP
-
+  Qt 5 based library for CoAP.
 
 Package: libqtcoap1-dev
 Section: libdevel
@@ -35,8 +35,9 @@ Depends: libqtcoap1 (= ${binary:Version}),
   ${shlibs:Depends},
   ${misc:Depends}
 Description: Qt 5 based library for CoAP - development files
+  Development files for Qt 5 based CoAP library.
 
-  
+
 Package: libqtcoap1-dbg
 Priority: extra
 Architecture: any
@@ -45,6 +46,7 @@ Depends: libqtcoap1 (= ${binary:Version}),
   ${shlibs:Depends},
   ${misc:Depends}
 Description: Qt 5 based library for CoAP - debug symbols
+  Debug Symbols for Qt 5 based CoAP library.
 
 
 Package: libqtcoap-tests
@@ -53,4 +55,4 @@ Depends: libqtcoap1 (= ${binary:Version}),
   ${shlibs:Depends},
   ${misc:Depends}
 Description: Tests for the qtcoap library
-
+  Test executable for the Qt 5 based CoAP library.
