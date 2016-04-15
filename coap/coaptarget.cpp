@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *                                                                         *
- *  Copyright (C) 2015-2016 Simon Stuerz <simon.stuerz@guh.guru>           *
+ *  Copyright (C) 2016 Simon Stuerz <simon.stuerz@guh.guru>                *
  *                                                                         *
  *  This file is part of QtCoap.                                           *
  *                                                                         *
@@ -39,7 +39,6 @@ QPointer<CoapReply> CoapTarget::currentObservationReply() const
 
 void CoapTarget::setCurrentObservationReply(CoapReply *reply)
 {
-    qDebug() << "Set current observation reply" << reply->request().url().toString();
     m_currentObservationReply = reply;
 }
 
@@ -50,13 +49,11 @@ QList<CoapObserveResource> CoapTarget::observationResources() const
 
 void CoapTarget::addObservationResource(const CoapObserveResource &observationResource)
 {
-    qDebug() << "Add observation resource" << observationResource.url().toString();
     m_observationResources.append(observationResource);
 }
 
 void CoapTarget::removeObservationResource(const QByteArray &token)
 {
-    qDebug() << "Remove observation resource" << token;
     foreach (const CoapObserveResource &resource, m_observationResources) {
         if (resource.token() == token)
             m_observationResources.removeAll(resource);

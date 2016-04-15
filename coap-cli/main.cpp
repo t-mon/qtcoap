@@ -104,9 +104,9 @@ int main(int argc, char *argv[])
     }
 
     if (parser.isSet(verboseOption)) {
-        s_loggingFilters.insert("CoapNetworkAccessManager", true);
+        s_loggingFilters.insert("CoAP", true);
     } else {
-         s_loggingFilters.insert("CoapNetworkAccessManager", false);
+         s_loggingFilters.insert("CoAP", false);
     }
 
     // install logging filter
@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
     }
 
     if (parser.isSet(observeOption) && parser.isSet(discoverOption)) {
-        qWarning() << "Error: The resource can not be discovered and observed." << endl <<"Please use either '-d' or '-o', not both." << endl;
+        qWarning() << "Error: The resource can not be discovered and observed." << endl << "Please use either '-d' or '-o', not both." << endl;
         parser.showHelp();
     }
 

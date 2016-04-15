@@ -7,7 +7,7 @@ The QtCoap lib allowes you communicate with a CoAP server according to the [RFC7
 =====================================================================
 ## Lib features
 
-* Queue for nonblocking multiple requests (FIFO)
+* Queue for nonblocking multiple requests (FIFO) for each host
 * DNS resolving for URLs
 * GET, PUT, POST, DELETE methods
 * Piggybacked requests
@@ -86,7 +86,7 @@ You can checkout the `coapclient.pro` file or the `coaptests.pro` to see how the
         LIBS += -L/path/to/the/lib/libqtcoap/ -lqtcoap
         INCLUDEPATH += /path/to/this/repository/coap
 
-#### Using the `coap.pri`
+#### Using the `coap.pri` (like `coap-cli`)
 
 You can copy the `coap` folder into your Qt project structure and include the `coap.pri` file in your project file:
 
@@ -97,10 +97,13 @@ You can copy the `coap` folder into your Qt project structure and include the `c
 This example shows you the basic usage of the QtCoap lib:
 
 ```cpp
+
+#include "coapnetworkaccessmanager.h"
+
 MyClass::MyClass(QObject *parent) : 
   QObject(parent)
 {
-  Coap *coap = new Coap(this);
+  CoapNetworkAccessManager *coap = new CoapNetworkAccessManager(this);
   connect(m_coap, SIGNAL(replyFinished(CoapReply*)), this, SLOT(onReplyFinished(CoapReply*)));
 
   CoapRequest request(QUrl("coap://coap.me/hello"));

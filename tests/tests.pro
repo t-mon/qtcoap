@@ -1,7 +1,4 @@
-TARGET = coaptests
-
-target.path = /usr/bin
-INSTALLS += target
+TARGET = libqtcoap-tests
 
 CONFIG += testcase
 
@@ -11,7 +8,7 @@ QMAKE_LFLAGS += -std=c++11
 QT += testlib network
 
 INCLUDEPATH += ../coap
-LIBS += -L../libqtcoap/ -lqtcoap
+LIBS += -L../libqtcoap/ -lqtcoap1
 
 SOURCES += \
     coaptests.cpp
@@ -19,3 +16,5 @@ SOURCES += \
 HEADERS += \
     coaptests.h
 
+target.path = /usr/tests
+INSTALLS += target

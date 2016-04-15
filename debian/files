@@ -1,0 +1,5 @@
+coap-cli_0.0.1_amd64.deb utils optional
+libqtcoap-tests_0.0.1_amd64.deb utils optional
+libqtcoap1-dbg_0.0.1_amd64.deb debug extra
+libqtcoap1-dev_0.0.1_amd64.deb libdevel optional
+libqtcoap1_0.0.1_amd64.deb libs optional

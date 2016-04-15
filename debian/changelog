@@ -1,0 +1,5 @@
+qtcoap (0.0.1) xenial; urgency=low
+
+  * Initial release.
+
+ -- Simon Stuerz <stuerz.simon@guh.guru>  Fri, 15 Apr 2016 17:39:23 +0200

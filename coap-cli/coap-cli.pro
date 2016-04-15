@@ -17,3 +17,6 @@ SOURCES += main.cpp \
 
 HEADERS += \
     core.h
+
+target.path = /usr/bin
+INSTALLS += target

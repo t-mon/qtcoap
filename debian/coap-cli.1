@@ -1,0 +1,73 @@
+.\" Manpage for coap-cli.
+.\" Contact stuerz.simon@gmail.com to correct errors or typos.
+.TH man 1 "April 2016" "1.0" "coap-cli man page"
+.SH NAME
+coap-cli
+.SH SYNOPSIS
+.B coap-cli
+[\fIOPTIONS\fR]
+[\fIMETHOD\fR] 
+\fIurl\fR
+
+.SH DESCRIPTION
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Displays this help.
+.TP
+\fB\-p\fR, \fB\-\-payload \<payload\>\fR
+The payload data you want to send. Has only an effect for \fIpost\fR and \fIput\fR methods
+.TP
+\fB\-o\fR, \fB\-\-observe\fR
+Observe the given resource.
+.TP
+\fB\-d\fR, \fB\-\-discover\fR
+Discover the resources of the server.
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Print the whole communication process.
+
+.SH METHODS
+.TP
+\fBget\fR
+Perform a GET request (default).
+.TP
+\fBput\fR
+Perform a PUT request. See also \fI--payload\fR.
+.TP
+\fBpost\fR
+Perform a POST request. See also \fI--payload\fR.
+.TP
+\fBdelete\fR
+Perform a DELETE request.
+
+.SH EXAMPLES
+.TP
+Discover a CoAP server:
+.IP
+$ coap-cli -d coap://example.com
+.TP
+Perform a GET request:
+.IP
+$ coap-cli coap://example.com/
+.TP
+Post data to a CoAP server resource:
+.IP
+$ coap-cli -p "data for the resource" post coap://example.com/obs
+.TP
+Observe a resource and print notifications:
+.IP
+$ coap-cli -o coap://example.com/obs
+
+.SH AUTHOR
+Written by Simon Stürz
+.SH COPYRIGHT
+Copyright \(co 2016 Simon Stürz <stuerz.simon@gmail.com>.
+.br
+
+License GPLv3: GNU GPL version 3 <http://gnu.org/licenses/gpl.html>.
+.br
+This is free software: you are free to change and redistribute it.
+.br
+There is NO WARRANTY, to the extent permitted by law.
+

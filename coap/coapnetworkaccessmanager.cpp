@@ -82,7 +82,7 @@ CoapNetworkAccessManager::CoapNetworkAccessManager(QObject *parent, const quint1
 {
     m_socket = new QUdpSocket(this);
 
-    if (!m_socket->bind(QHostAddress::Any, m_port))
+    if (!m_socket->bind(QHostAddress::Any, m_port, QAbstractSocket::ShareAddress))
         qCWarning(dcCoap) << "Could not bind to port" << m_port << m_socket->errorString();
 
     connect(m_socket, SIGNAL(readyRead()), this, SLOT(onReadyRead()));
@@ -540,8 +540,6 @@ void CoapNetworkAccessManager::processNotification(CoapTarget *target, const Coa
     // check if it is a blockwise notification
     if (pdu.hasOption(CoapOption::Block2)) {
 
-        qCDebug(dcCoap) << "Got first part of blocked notification";
-
         // First part of the blocked notification
         // respond with ACK
         CoapPdu responsePdu;
@@ -709,7 +707,7 @@ void CoapNetworkAccessManager::processBlock2Notification(CoapTarget *target, con
 CoapTarget *CoapNetworkAccessManager::findTarget(const QHostAddress &address)
 {
     foreach (CoapTarget *target, m_coapTargets) {
-        if (target->address() == address)
+        if (QHostAddress(target->address().toIPv6Address()) == QHostAddress(address.toIPv6Address()))
             return target;
     }
     return NULL;
@@ -790,8 +788,7 @@ void CoapNetworkAccessManager::onReadyRead()
         m_socket->readDatagram(data.data(), data.size(), &hostAddress, &port);
     }
 
-    CoapPdu pdu(data);
-    processResponse(pdu, hostAddress, port);
+    processResponse(CoapPdu(data), QHostAddress(hostAddress.toIPv6Address()), port);
 }
 
 void CoapNetworkAccessManager::onReplyTimeout()
@@ -855,7 +852,7 @@ void CoapNetworkAccessManager::onReplyFinished()
     if (target->hasRunningObservationReply() && target->currentObservationReply() == reply) {
         target->removeReply(reply);
         reply->deleteLater();
-        qCWarning(dcCoap) << "Notification reply finished wirh error" << reply->errorString();
+        qCWarning(dcCoap) << "Notification reply (blocked) finished with error" << reply->errorString();
         return;
     }
 

@@ -1,0 +1,56 @@
+Source: qtcoap
+Section: utils
+Priority: optional
+Maintainer: Simon Stuerz <simon.stuerz@guh.guru>
+Build-Depends: debhelper (>= 9.0.0),
+  dpkg-dev (>= 1.16.1~),
+  qt5-default,
+  qtbase5-dev,
+Standards-Version: 3.9.7
+
+
+Package: coap-cli
+Architecture: any
+Depends: libqt5network5,
+  libqt5gui5,
+  ${shlibs:Depends},
+  ${misc:Depends}
+Description: Command line interface for interacting with a CoAP server
+
+
+Package: libqtcoap1
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends},
+  ${misc:Depends},
+  libqt5network5,
+  libqt5gui5
+Description: Qt 5 based library for CoAP
+
+
+Package: libqtcoap1-dev
+Section: libdevel
+Architecture: any
+Depends: libqtcoap1 (= ${binary:Version}),
+  ${shlibs:Depends},
+  ${misc:Depends}
+Description: Qt 5 based library for CoAP - development files
+
+  
+Package: libqtcoap1-dbg
+Priority: extra
+Architecture: any
+Section: debug
+Depends: libqtcoap1 (= ${binary:Version}),
+  ${shlibs:Depends},
+  ${misc:Depends}
+Description: Qt 5 based library for CoAP - debug symbols
+
+
+Package: libqtcoap-tests
+Architecture: any
+Depends: libqtcoap1 (= ${binary:Version}),
+  ${shlibs:Depends},
+  ${misc:Depends}
+Description: Tests for the qtcoap library
+

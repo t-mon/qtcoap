@@ -18,8 +18,8 @@
  *                                                                         *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#ifndef COAP_H
-#define COAP_H
+#ifndef COAPNETWORKACCESSMANAGER_H
+#define COAPNETWORKACCESSMANAGER_H
 
 #include <QObject>
 #include <QHostInfo>
@@ -103,4 +103,4 @@ private slots:
     void onReplyFinished();
 };
 
-#endif // COAP_H
+#endif // COAPNETWORKACCESSMANAGER_H

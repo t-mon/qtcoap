@@ -106,8 +106,9 @@ void Core::onReplyFinished(CoapReply *reply)
             reply->deleteLater();
             exit(-1);
         }
+
         qDebug() << "Notifications enabled successfully on resource" << reply->request().url().path();
-        qDebug() << reply->payload() << endl;
+        qDebug() << QString::fromUtf8(reply->payload()) << endl;
         reply->deleteLater();
         return;
 
@@ -124,7 +125,7 @@ void Core::onReplyFinished(CoapReply *reply)
 
 void Core::onNotificationReceived(const CoapObserveResource &resource, const int &notificationNumber, const QByteArray &payload)
 {
-    qDebug() << QString("Notification #%1").arg(notificationNumber) << "from" << resource.url().toString() << endl << payload << endl;
+    qDebug() << QString("Notification #%1").arg(notificationNumber) << "from" << resource.url().toString() << endl << QString::fromUtf8(payload) << endl;
 }
 
 
