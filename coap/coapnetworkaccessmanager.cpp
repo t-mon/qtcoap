@@ -278,7 +278,7 @@ void CoapNetworkAccessManager::sendRequest(CoapReply *reply, const bool &lookedU
     reply->m_lockedUp = lookedUp;
     reply->m_timer->start();
 
-    qCDebug(dcCoap) << "--->" << pdu;
+    qCDebug(dcCoap) << "--->" << reply->hostAddress() << pdu;
 
     // send the data
     if (reply->request().messageType() == CoapPdu::NonConfirmable) {
@@ -303,7 +303,7 @@ void CoapNetworkAccessManager::processResponse(const CoapPdu &pdu, const QHostAd
 {
     CoapTarget *target = findTarget(address);
     if (!target) {
-        qCDebug(dcCoap) << "Got message without request or registered observe resource from" << address.toString() << endl << "<---" << pdu;
+        qCDebug(dcCoap) << "Got message without request or registered observe resource from" << address << endl << "<---" << pdu;
 //        CoapPdu responsePdu;
 //        responsePdu.setMessageType(CoapPdu::Reset);
 //        responsePdu.setMessageId(pdu.messageId());
@@ -316,7 +316,7 @@ void CoapNetworkAccessManager::processResponse(const CoapPdu &pdu, const QHostAd
     // Check if this is the current reply for this target
     if (target->currentReply()) {
         CoapReply *reply = target->currentReply();
-        qCDebug(dcCoap) << "<---" << QString("%1:%2").arg(address.toString()).arg(QString::number(port)) << pdu;
+        qCDebug(dcCoap) << "<---" << address << pdu;
 
         // Check if PDU is valid
         if (!pdu.isValid()) {
@@ -345,7 +345,7 @@ void CoapNetworkAccessManager::processResponse(const CoapPdu &pdu, const QHostAd
 
     // Check if we know the message by token (async response)
     if (target->hasAsyncReply(pdu.token())) {
-        qCDebug(dcCoap) << "<---" << QString("%1:%2").arg(address.toString()).arg(QString::number(port)) << pdu;
+        qCDebug(dcCoap) << "<---" << address << pdu;
 
         CoapReply *reply = target->asyncReply(pdu.token());
         // Separate Response received
@@ -353,7 +353,7 @@ void CoapNetworkAccessManager::processResponse(const CoapPdu &pdu, const QHostAd
         responsePdu.setMessageType(CoapPdu::Acknowledgement);
         responsePdu.setStatusCode(CoapPdu::Empty);
         responsePdu.setMessageId(pdu.messageId());
-        qCDebug(dcCoap) << "--->" << responsePdu;
+        qCDebug(dcCoap) << "--->" << reply->hostAddress() << responsePdu;
         sendCoapPdu(reply->hostAddress(), reply->port(), responsePdu);
 
         reply->setStatusCode(pdu.statusCode());
@@ -468,7 +468,7 @@ void CoapNetworkAccessManager::processBlock1Response(CoapReply *reply, const Coa
 
     reply->setMessageId(nextBlockRequest.messageId());
 
-    qCDebug(dcCoap) << "--->" << nextBlockRequest;
+    qCDebug(dcCoap) << "--->" << reply->hostAddress() << nextBlockRequest;
     sendData(reply->hostAddress(), reply->port(), pduData);
 }
 
@@ -521,13 +521,13 @@ void CoapNetworkAccessManager::processBlock2Response(CoapReply *reply, const Coa
 
     reply->setMessageId(nextBlockRequest.messageId());
 
-    qCDebug(dcCoap) << "--->" << nextBlockRequest;
+    qCDebug(dcCoap) << "--->" << reply->hostAddress() << nextBlockRequest;
     sendData(reply->hostAddress(), reply->port(), pduData);
 }
 
 void CoapNetworkAccessManager::processNotification(CoapTarget *target, const CoapPdu &pdu, const QHostAddress &address, const quint16 &port)
 {
-    qCDebug(dcCoap) << "<--- Notification" << endl << pdu;
+    qCDebug(dcCoap) << "<--- Notification" << address << pdu;
 
     // Check if this target has an observation resource for this token
     if (!target->hasObservationResource(pdu.token())) {
@@ -548,7 +548,7 @@ void CoapNetworkAccessManager::processNotification(CoapTarget *target, const Coa
         responsePdu.setMessageId(pdu.messageId());
         responsePdu.setToken(pdu.token());
 
-        qCDebug(dcCoap) << "---> Notification:" << responsePdu;
+        qCDebug(dcCoap) << "---> Notification:" << address << responsePdu;
         sendCoapPdu(address, port, responsePdu);
 
         // create reply for blockwise transfere
@@ -606,7 +606,7 @@ void CoapNetworkAccessManager::processNotification(CoapTarget *target, const Coa
         reply->setPort(port);
         reply->m_timer->start();
 
-        qCDebug(dcCoap) << "---> Notification" << endl << pdu;
+        qCDebug(dcCoap) << "---> Notification" << address << pdu;
         sendData(address, port, pduData);
 
     } else {
@@ -618,7 +618,7 @@ void CoapNetworkAccessManager::processNotification(CoapTarget *target, const Coa
         responsePdu.setMessageId(pdu.messageId());
         responsePdu.setToken(pdu.token());
 
-        qCDebug(dcCoap) << "---> Notification" << endl << responsePdu;
+        qCDebug(dcCoap) << "---> Notification" << address << responsePdu;
         sendCoapPdu(address, port, responsePdu);
 
         // Get notification number
@@ -647,7 +647,7 @@ void CoapNetworkAccessManager::processBlock2Notification(CoapTarget *target, con
         responsePdu.setStatusCode(CoapPdu::Empty);
         responsePdu.setMessageId(pdu.messageId());
         responsePdu.setToken(pdu.token());
-        qCDebug(dcCoap) << "---> Notification" << endl << responsePdu;
+        qCDebug(dcCoap) << "---> Notification" << reply->hostAddress() << responsePdu;
         sendCoapPdu(reply->hostAddress(), reply->port(), responsePdu);
 
         reply->appendPayloadData(pdu.payload());
@@ -700,14 +700,14 @@ void CoapNetworkAccessManager::processBlock2Notification(CoapTarget *target, con
 
     reply->setMessageId(nextBlockRequest.messageId());
 
-    qCDebug(dcCoap) << "---> Notification" << endl << nextBlockRequest;
+    qCDebug(dcCoap) << "---> Notification" << reply->hostAddress() << nextBlockRequest;
     sendData(reply->hostAddress(), reply->port(), pduData);
 }
 
 CoapTarget *CoapNetworkAccessManager::findTarget(const QHostAddress &address)
 {
     foreach (CoapTarget *target, m_coapTargets) {
-        if (target->address() == address)
+        if (QHostAddress(target->address().toIPv6Address()) == QHostAddress(address.toIPv6Address()))
             return target;
     }
     return NULL;
@@ -805,7 +805,7 @@ void CoapNetworkAccessManager::onReplyTimeout()
         qCDebug(dcCoap) << QString("Reply timeout: resending message %1/4").arg(reply->m_retransmissions);
 
     reply->resend();
-    qCDebug(dcCoap()) << "--->" << CoapPdu(reply->requestData());
+    qCDebug(dcCoap()) << "--->" << reply->hostAddress() << CoapPdu(reply->requestData());
     m_socket->writeDatagram(reply->requestData(), reply->hostAddress(), reply->port());
 }
 

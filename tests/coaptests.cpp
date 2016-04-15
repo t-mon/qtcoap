@@ -58,7 +58,7 @@ CoapTests::CoapTests(QObject *parent) : QObject(parent)
 
 void CoapTests::observeResource()
 {
-    CoapRequest request(QUrl("coap://vs0.inf.ethz.ch/obs"));
+    CoapRequest request(QUrl("coap://vs0.inf.ethz.ch:5683/obs"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -97,7 +97,7 @@ void CoapTests::observeResource()
 
 void CoapTests::observeLargeResource()
 {
-    CoapRequest request(QUrl("coap://vs0.inf.ethz.ch/obs-large"));
+    CoapRequest request(QUrl("coap://vs0.inf.ethz.ch:5683/obs-large"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -178,7 +178,7 @@ void CoapTests::invalidScheme()
 
 void CoapTests::ping()
 {
-    CoapRequest request(QUrl("coap://coap.me/"));
+    CoapRequest request(QUrl("coap://coap.me:5683/"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -195,7 +195,7 @@ void CoapTests::ping()
 
 void CoapTests::hello()
 {
-    CoapRequest request(QUrl("coap://coap.me/hello"));
+    CoapRequest request(QUrl("coap://coap.me:5683/hello"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -231,7 +231,7 @@ void CoapTests::broken()
 
 void CoapTests::query()
 {
-    CoapRequest request(QUrl("coap://coap.me/query?guh=awesome"));
+    CoapRequest request(QUrl("coap://coap.me:5683/query?guh=awesome"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -249,7 +249,7 @@ void CoapTests::query()
 
 void CoapTests::subPath()
 {
-    CoapRequest request(QUrl("coap://coap.me/path/sub1"));
+    CoapRequest request(QUrl("coap://coap.me:5683/path/sub1"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -305,12 +305,12 @@ void CoapTests::extendedDelta_data()
 {
     QTest::addColumn<QUrl>("url");
 
-    QTest::newRow("weird33") << QUrl("coap://coap.me/weird33");
-    QTest::newRow("weird44") << QUrl("coap://coap.me/weird44");
-    QTest::newRow("weird55") << QUrl("coap://coap.me/weird55");
-    QTest::newRow("weird333") << QUrl("coap://coap.me/weird333");
-    QTest::newRow("weird3333") << QUrl("coap://coap.me/weird3333");
-    QTest::newRow("weird33333") << QUrl("coap://coap.me/weird33333");
+    QTest::newRow("weird33") << QUrl("coap://coap.me:5683/weird33");
+    QTest::newRow("weird44") << QUrl("coap://coap.me:5683/weird44");
+    QTest::newRow("weird55") << QUrl("coap://coap.me:5683/weird55");
+    QTest::newRow("weird333") << QUrl("coap://coap.me:5683/weird333");
+    QTest::newRow("weird3333") << QUrl("coap://coap.me:5683/weird3333");
+    QTest::newRow("weird33333") << QUrl("coap://coap.me:5683/weird33333");
 }
 
 void CoapTests::extendedDelta()
@@ -335,7 +335,7 @@ void CoapTests::extendedDelta()
 
 void CoapTests::secret()
 {
-    CoapRequest request(QUrl("coap://coap.me/secret"));
+    CoapRequest request(QUrl("coap://coap.me:5683/secret"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -538,7 +538,7 @@ void CoapTests::largeUpdate()
 
 void CoapTests::coreLinkParser()
 {
-    CoapRequest request(QUrl("coap://coap.me/.well-known/core"));
+    CoapRequest request(QUrl("coap://coap.me:5683/.well-known/core"));
     qDebug() << request.url().toString();
 
     QSignalSpy spy(m_coap, SIGNAL(replyFinished(CoapReply*)));
@@ -566,7 +566,7 @@ void CoapTests::multipleCalls()
     // Multiple calls on multiple hosts
     replies.append(m_coap->get(CoapRequest(QUrl("coap://coap.me:5683/separate"))));
     replies.append(m_coap->get(CoapRequest(QUrl("coap://coap.me:5683/separate"))));
-    replies.append(m_coap->ping(CoapRequest(QUrl("coap://coap.me"))));
+    replies.append(m_coap->ping(CoapRequest(QUrl("coap://coap.me:5683"))));
     replies.append(m_coap->get(CoapRequest(QUrl("coap://vs0.inf.ethz.ch:5683/separate"))));
     replies.append(m_coap->get(CoapRequest(QUrl("coap://vs0.inf.ethz.ch:5683/separate"))));
     replies.append(m_coap->get(CoapRequest(QUrl("coap://vs0.inf.ethz.ch:5683"))));
